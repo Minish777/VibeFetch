@@ -1,25 +1,22 @@
-# 🌌 VibeFetch v1.0
+# 🌌 VibeFetch (powered by Gemini)
 
-![OS](https://img.shields.io/badge/OS-Windows%20%7C%20Linux%20%7C%20macOS-blue?style=for-the-badge)
-![Fast](https://img.shields.io/badge/Speed-Instant-green?style=for-the-badge)
-![Config](https://img.shields.io/badge/Config-JSON-yellow?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-1.1.0-blueviolet?style=for-the-badge)
+![Dev](https://img.shields.io/badge/Dev-sodrely%20%26%20Gemini-orange?style=for-the-badge)
+![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-white?style=for-the-badge)
 
-VibeFetch — это твой личный, полностью настраиваемый инструмент для вывода системной информации. Никаких лишних зависимостей, только скорость и стиль.
+**VibeFetch** (или *VibeCode*) — это современный, эстетичный системный фетч, разработанный в коллаборации с нейросетью Gemini. Ориентирован на кастомизацию и скорость.
 
-### 🧩 Модули и Кастомизация
-В `config.json` ты можешь менять как **названия** строк, так и их **значения**:
+### 🌟 Ключевые фишки
+- **Auto-Update Checker:** Проверяет новые релизы на GitHub прямо при запуске.
+- **Gemini Engine Inside:** Оптимизированный код и чистый дизайн.
+- **Deep JSON Config:** Настраивай каждое слово и каждое значение.
+- **Mega Modules:** Выводит всё — от IP до уровня заряда батареи.
 
-| JSON Ключ | Описание | Пример |
-| :--- | :--- | :--- |
-| `custom_name_os` | Имя поля ОС | `"My System"` |
-| `custom_value_os` | Сама ОС | `"Super Linux 2.0"` |
-| `custom_name_cpu` | Имя поля CPU | `"Nuclear Heart"` |
-| `custom_value_cpu` | Модель проца | `"Xeon Platinum 9999"` |
+### ⚙️ Модули в `config.json`
+Вы можете переименовать любой параметр:
+- `custom_name_net`: Свой заголовок для IP.
+- `custom_value_cpu`: Возможность скрыть свой Xeon и написать "NASA Supercomputer".
 
-### 🚀 Как запустить везде
-1. **Windows:** `gcc main.c -o vfetch.exe -lkernel32 -ladvapi32`
-2. **Linux:** `gcc main.c -o vfetch && chmod +x vfetch`
-3. **Запуск:** `./vfetch`
-
----
-**Digital Nickname:** `sodrely`
+### 🛠 Сборка
+```bash
+gcc main.c -o vfetch.exe -lkernel32 -ladvapi32 -luser32
