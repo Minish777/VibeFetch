@@ -20,3 +20,5 @@
 ### 🛠 Сборка
 ```bash
 gcc main.c -o vfetch.exe -lkernel32 -ladvapi32 -luser32
+
+[License](./LICENSE).
