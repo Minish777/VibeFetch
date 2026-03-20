@@ -1,26 +1,22 @@
-# 🚀 VibeFetch
+# 🌌 VibeFetch
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![C Standard](https://img.shields.io/badge/C-99-blue.svg)](https://en.wikipedia.org/wiki/C99)
-[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-lightgrey.svg)](#)
+![Version](https://img.shields.io/badge/version-0.7.0-blueviolet)
+![Platform](https://img.shields.io/badge/platform-Windows-blue)
 
-Minimalist system fetch tool for power users. Fast, clean, and written in pure C.
+A high-performance, customizable system fetch tool inspired by Fastfetch but built for speed in pure C.
 
-### 📊 Project Status & Stats
+### 📋 Features Matrix
 
-| Feature | Status | Compatibility |
-| :--- | :---: | :--- |
-| **CPU Info** | ✅ Ready | Windows, Linux |
-| **User/Host Detection** | ✅ Ready | All Systems |
-| **ANSI Colors** | 🎨 Active | Modern Terminals |
-| **Memory Info** | 🛠 Beta | Linux Only |
-| **Aesthetics** | ✨ 100% | High Vibe |
+| Feature | Support | Description |
+| :--- | :--- | :--- |
+| **Custom ASCII** | ✅ Full | Load any `.txt` logo via config |
+| **Module Toggle** | ✅ Ready | Enable/Disable CPU, GPU, Disk |
+| **Hardware** | ✅ Deep | Native Win32 API calls for Xeon/NVIDIA |
+| **JSON Export** | 📅 v1.0 | Coming soon |
 
----
-
-### 🛠 Installation
-
-#### Windows (MSYS2 / MinGW)
+### ⚙️ Configuration (`config.vibe`)
+You can customize the output without recompiling:
 ```bash
-gcc main.c -o vfetch.exe -lkernel32 -ladvapi32
-./vfetch.exe
+import: logo.txt  # Path to your ASCII art
+cpu=true          # Show/Hide CPU
+gpu=false         # Show/Hide GPU
