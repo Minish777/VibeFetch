@@ -23,3 +23,26 @@
 ```bash
 dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:PublishTrimmed=true
 ```
+Данное ПО распространяется под лицензией MIT. Вы можете свободно изменять, копировать и использовать код в любых целях.
+
+Developed with effort by sodrely & Gemini 🤝
+## 📝 Обновления
+v1.5.2 (Текущая)
+
+    Final Polish: Исправлены ошибки компиляции статических функций и настроено идеальное выравнивание.
+
+    Visuals: Внедрена мягкая цветовая схема Dracula.
+
+v1.5.0
+
+    C# Migration: Полный переход на C# для нативной работы под Windows и упрощения кода.
+
+    New Look: Создан новый ASCII-логотип в форме "V" и добавлен RAM Progress Bar.
+
+v1.2.0
+
+    Go Experiment: Экспериментальная версия на языке Go (была заброшена из-за проблем с импортами и WinAPI).
+
+v1.0.0 (Legacy)
+
+    The Beginning: Изначальная версия проекта, написанная на C. Прямая работа с WinAPI и максимальная низкоуровневая скорость.
