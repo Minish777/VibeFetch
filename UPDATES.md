@@ -1,8 +1,8 @@
 # 📝 VibeFetch Update Log
 
-### [v1.0.0] - 2026-03-20
+### [v1.1.0] - 2026-03-20
 **Добавлено:**
-- **Full JSON Parity:** Добавлены все модули из Fastfetch (Battery, Uptime, DE/WM, Shell).
-- **Deep Customization:** Поддержка `custom_value_` для подмены названий железа (например, скрыть Xeon).
-- **Universal Binary:** Код автоматически подстраивается под Windows (Win32), Linux (utsname) и macOS.
-- **Auto-Config v2:** Создает полный `config.json` со всеми новыми полями.
+- **Gemini Engine:** В логотип и описание добавлена пометка о разработке совместно с Gemini.
+- **Mega Modules:** Добавлены модули: Local IP, Public IP, Battery, Resolution, Terminal, Shell, Packages, Uptime.
+- **Update Checker:** При запуске программа проверяет последнюю версию на GitHub (через `curl` или системный вызов).
+- **Custom Value System:** Теперь в JSON можно подменить абсолютно любой параметр.
