@@ -1,25 +1,25 @@
-# 🚀 VibeFetch v0.9.0
+# 🌌 VibeFetch v1.0
 
-![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-orange?style=for-the-badge&logo=platformdotsh)
-![Language](https://img.shields.io/badge/Language-C-blue?style=for-the-badge&logo=c)
-![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
-![Status](https://img.shields.io/badge/Status-Beta_0.9.0-red?style=for-the-badge)
-![Customization](https://img.shields.io/badge/Custom-JSON_Config-blueviolet?style=for-the-badge)
+![OS](https://img.shields.io/badge/OS-Windows%20%7C%20Linux%20%7C%20macOS-blue?style=for-the-badge)
+![Fast](https://img.shields.io/badge/Speed-Instant-green?style=for-the-badge)
+![Config](https://img.shields.io/badge/Config-JSON-yellow?style=for-the-badge)
 
-**VibeFetch** — это сверхбыстрая альтернатива Fastfetch, написанная на чистом C для максимальной производительности на твоем железе (Xeon/GTX).
+VibeFetch — это твой личный, полностью настраиваемый инструмент для вывода системной информации. Никаких лишних зависимостей, только скорость и стиль.
 
-### 🌍 Поддержка систем
-Инструмент универсален и компилируется под любую среду:
-- **Windows:** Полная поддержка через Win32 API.
-- **Linux:** Работает на Arch, Ubuntu, CachyOS и др.
-- **macOS:** Нативная поддержка Darwin.
+### 🧩 Модули и Кастомизация
+В `config.json` ты можешь менять как **названия** строк, так и их **значения**:
 
-### ⚙️ Кастомизация через `config.json`
-При первом запуске создается файл настроек. Используй префикс `custom_name_`, чтобы переименовать любой модуль:
+| JSON Ключ | Описание | Пример |
+| :--- | :--- | :--- |
+| `custom_name_os` | Имя поля ОС | `"My System"` |
+| `custom_value_os` | Сама ОС | `"Super Linux 2.0"` |
+| `custom_name_cpu` | Имя поля CPU | `"Nuclear Heart"` |
+| `custom_value_cpu` | Модель проца | `"Xeon Platinum 9999"` |
 
-```json
-{
-  "custom_name_os": "My OS",
-  "custom_name_cpu": "Nuclear Processor",
-  "custom_name_gpu": "Graphics Monster"
-}
+### 🚀 Как запустить везде
+1. **Windows:** `gcc main.c -o vfetch.exe -lkernel32 -ladvapi32`
+2. **Linux:** `gcc main.c -o vfetch && chmod +x vfetch`
+3. **Запуск:** `./vfetch`
+
+---
+**Digital Nickname:** `sodrely`
