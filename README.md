@@ -1,28 +1,137 @@
+
+
+---
+
 # ⚡ VibeFetch
 
-![Version](https://img.shields.io/badge/version-1.6.5-blueviolet?style=for-the-badge)
-![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey?style=for-the-badge)
-![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
+> **Minimalist & aesthetic system information tool for terminal junkies**
 
-Минималистичный системный fetch-инструмент с поддержкой TrueColor и умной проверкой обновлений.
+---
+
+## 🧾 Описание
+
+**VibeFetch** — это сверхбыстрая утилита для отображения информации о системе, написанная на **C# (.NET 8)**.
+
+Проект создан для тех, кто ценит:
+
+* чистоту консоли
+* минимализм
+* высокую производительность
+
+Никакого мусора — только важная информация, оформленная в стильной оболочке в духе **Dracula Theme**.
+
+---
 
 ## ✨ Особенности
-* **Dracula Theme**: Идеально подобранные HEX-цвета (Cyan, Purple, Gray).
-* **Cross-Platform**: Работает на Windows, Linux (CachyOS/Arch) и macOS.
-* **Smart Update**: Проверяет наличие новой версии при запуске. Если обновлений нет — надпись исчезает, не мешая работе.
 
-## 📦 Установка и добавление в PATH
+* 🎨 **Dracula Theme** — тщательно подобранная цветовая палитра (HEX), совместимая с современными терминалами
+* 🚀 **High Performance** — работает на **.NET 8**, оптимизирован под x64
+* 🛠 **Auto-Installer** — Python-установщик:
 
-### 🪟 Windows
-1. Скачайте `vfetch.exe` из [Releases](https://github.com/Minish777/VibeFetch/releases).
-2. Создайте папку, например `C:\bin`, и положите туда файл.
-3. Нажмите `Win + R`, введите `sysdm.cpl`, перейдите в **Дополнительно** -> **Переменные среды**.
-4. Найдите **Path** в "Переменных пользователя", нажмите "Изменить" и добавьте путь `C:\bin`.
-5. Теперь команда `vfetch` работает в любом терминале.
+  * автоматически редактирует реестр Windows
+  * обновляет PATH
+  * избавляет от ручной настройки
+* 🐧 **Native Linux Support** — нативная работа на **Arch / CachyOS** через self-contained бинарники
+
+---
+
+## 📦 Установка
+
+### 🪟 Windows (рекомендуется)
+
+1. Скачайте последний релиз
+2. Поместите:
+
+   * `vfetch.exe`
+   * `install.py`
+     в одну папку
+3. Запустите:
+
+```bash
+python install.py
+```
+
+4. Перезапустите терминал
+5. Используйте:
+
+```bash
+vfetch
+```
+
+---
 
 ### 🐧 Linux / 🍎 macOS
-1. Скачайте бинарный файл.
-2. Сделайте его исполняемым: `chmod +x vfetch`.
-3. Переместите в PATH:
-   ```bash
-   sudo mv vfetch /usr/local/bin/
+
+Сборка и установка:
+
+```bash
+dotnet publish -c Release -r linux-x64 --self-contained true /p:PublishSingleFile=true
+sudo cp ./publish/vfetch /usr/local/bin/
+sudo chmod +x /usr/local/bin/vfetch
+```
+
+---
+
+## 🛠 Сборка из исходников
+
+Требуется:
+
+* **.NET 8 SDK**
+
+### Windows
+
+```bash
+dotnet publish -r win-x64 -c Release --self-contained true /p:PublishSingleFile=true /p:PublishTrimmed=true
+```
+
+### Linux
+
+```bash
+dotnet publish -r linux-x64 -c Release --self-contained true /p:PublishSingleFile=true
+```
+
+---
+
+## 📜 История обновлений
+
+### v1.9.0 *(текущая)*
+
+* ⚡ **Smart Refresh**
+  Добавлена функция `refresh_env()` — Windows мгновенно обновляет PATH без перезагрузки
+
+* 🧠 **Registry Overdrive**
+  Прямое редактирование реестра через Python для максимальной стабильности
+
+---
+
+### v1.8.5
+
+* 🌍 **Cross-OS Logic**
+  Исправлены критические ошибки запуска на Linux (WinAPI-конфликты)
+
+* 📊 **UI Polish**
+  Добавлена полоса прогресса для отображения RAM
+
+---
+
+### v1.7.0 — v1.8.0
+
+* 🔄 Переход с **C → C#**
+* 🌐 Добавлена проверка обновлений через GitHub API
+
+---
+
+### v1.0.0
+
+* 🚀 Первая стабильная версия на **C**
+
+---
+
+## 🤝 Авторы
+
+Создано:
+
+* **sodrely**
+* Gemini AI
+
+---
