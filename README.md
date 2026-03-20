@@ -1,22 +1,11 @@
-# 🌌 VibeFetch
+# 🚀 VibeFetch v0.8.0
 
-![Version](https://img.shields.io/badge/version-0.7.0-blueviolet)
-![Platform](https://img.shields.io/badge/platform-Windows-blue)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![C Standard](https://img.shields.io/badge/C-99-blue.svg)](#)
 
-A high-performance, customizable system fetch tool inspired by Fastfetch but built for speed in pure C.
+Эстетичный и быстрый инструмент для отображения информации о системе. Теперь с поддержкой динамических конфигов.
 
-### 📋 Features Matrix
-
-| Feature | Support | Description |
-| :--- | :--- | :--- |
-| **Custom ASCII** | ✅ Full | Load any `.txt` logo via config |
-| **Module Toggle** | ✅ Ready | Enable/Disable CPU, GPU, Disk |
-| **Hardware** | ✅ Deep | Native Win32 API calls for Xeon/NVIDIA |
-| **JSON Export** | 📅 v1.0 | Coming soon |
-
-### ⚙️ Configuration (`config.vibe`)
-You can customize the output without recompiling:
+### 🛠 Установка и сборка
+**Windows (MSYS2/MinGW):**
 ```bash
-import: logo.txt  # Path to your ASCII art
-cpu=true          # Show/Hide CPU
-gpu=false         # Show/Hide GPU
+gcc main.c -o vfetch.exe -lkernel32 -ladvapi32 -luser32
