@@ -1,12 +1,12 @@
 # 📝 VibeFetch Update Log
 
-### [v0.8.0] - 2026-03-20
+### [v0.9.0] - 2026-03-20
 **Добавлено:**
-- **Auto-Config:** Программа сама создает `config.vibe` с базовыми настройками, если его нет.
-- **Custom Labels:** Теперь в конфиге можно задать `custom_disk="My Drive"`, и в выводе будет "My Drive" вместо "Disk".
-- **UTF-8 Support:** Исправлено отображение логотипа в терминалах MSYS2/PowerShell.
-- **Multi-OS Core:** Код разделен на блоки, которые корректно работают и на Linux (через `sysinfo`), и на Windows.
+- **JSON Config:** Полный переход на `config.json`. Создается автоматически при первом запуске.
+- **Custom Labels:** Реализована логика `custom_name_`. Если в JSON прописано `"custom_name_os": "My Distro"`, то вместо "OS" выведется "My Distro".
+- **Cross-Platform:** Добавлена корректная обработка для **Linux**, **macOS** и **Windows** в одном файле.
+- **Shields Overload:** README теперь выглядит как серьезный Open Source проект.
 
 **Исправлено:**
-- Убран `sys/utsname.h`, вызывавший фатальную ошибку компиляции.
-- Исправлен `Segmentation fault` при обращении к памяти видеокарты.
+- Ошибки линковки `sys/utsname.h` на Windows (теперь через условия `#ifdef`).
+- Исправлен `Segmentation fault` при отсутствии файла конфигурации.
