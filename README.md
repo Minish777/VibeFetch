@@ -1,14 +1,25 @@
-# 🚀 VibeFetch v1.2.0
+# ⚡ VibeFetch
 
-![OS Detection](https://img.shields.io/badge/OS_Detect-Smart-success?style=for-the-badge)
-![Shell Detection](https://img.shields.io/badge/Shell-Auto-blue?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-1.5.2-blueviolet?style=for-the-badge)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-lightgrey?style=for-the-badge)
+![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
 
-**VibeFetch** теперь официально "умнее". Программа не просто пишет "Windows", а определяет билд твоей системы и реально используемую оболочку (Shell).
+Минималистичный и быстрый системный fetch-инструмент с идеальной палитрой. Создан для тех, кто ценит эстетику консоли и мгновенный отклик.
 
-### ✨ Что нового:
-- **Умный конфиг:** Если мы добавим новые фишки в v1.3.0, твой `config.json` обновится сам, не затирая твои кастомные имена.
-- **Точность:** Больше никаких "10/11". Только конкретика.
+## ✨ Особенности
+* **Dracula Palette**: Сбалансированные цвета (Cyan, Purple, Gray), которые не режут глаза в любом терминале.
+* **Visual RAM Bar**: Графический индикатор загрузки памяти для твоего конфига.
+* **Ultra Lightweight**: Один `.exe` файл, который не требует установки гигабайтов мусора.
+* **Update Notifier**: Автоматическая проверка новых релизов на GitHub при каждом запуске.
 
-### 🛠 Сборка
+## 📦 Установка и запуск
+1. Скачайте `vfetch.exe` из раздела **Releases**.
+2. Поместите файл в любую папку (например, `C:\bin`).
+3. Добавьте путь к этой папке в системную переменную **PATH**.
+4. Напишите `vfetch` в CMD или PowerShell.
+
+## 🛠 Сборка из исходников
+Для самостоятельного билда (требуется .NET 8.0 SDK):
 ```bash
-gcc main.c -o vfetch.exe -lkernel32 -ladvapi32 -luser32 -lntdll
+dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:PublishTrimmed=true
+```
