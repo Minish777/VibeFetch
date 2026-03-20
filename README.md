@@ -27,6 +27,13 @@ dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=
 
 Developed with effort by sodrely & Gemini 🤝
 ## 📝 Обновления
+
+v1.5.3 (Current)
+
+```bash
+TrueColor Support: Переход на 24-битную палитру (HEX ANSI) для максимально точной передачи цветов Dracula.
+VT-Mode Fix: Улучшена инициализация виртуального терминала для Windows 10/11.
+```
 v1.5.2 (Текущая)
 
     Final Polish: Исправлены ошибки компиляции статических функций и настроено идеальное выравнивание.
