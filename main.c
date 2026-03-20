@@ -1,3 +1,8 @@
+/*
+ * VibeFetch v1.1.0
+ * Licensed under MIT (c) 2026 sodrely & Gemini AI
+ * GitHub: https://github.com/sodrely/VibeFetch
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
