@@ -80,3 +80,4 @@
 **Разработано с душой пользователем [sodrely](https://www.google.com/search?q=https://github.com/Minish777).**
 
 -----
+rpmbuild --dbpath /tmp/rpmdb -ba ~/rpmbuild/SPECS/vibefetch.spec
