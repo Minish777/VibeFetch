@@ -1,85 +1,100 @@
 using System;
 using System.Runtime.InteropServices;
+using System.Net.Http;
+using System.Threading.Tasks;
 using System.IO;
-using System.Linq;
 using System.Diagnostics;
+using System.Linq;
 
 namespace VibeFetch
 {
     class Program
     {
+        static string Version = "1.9.8";
+        static string Repo = "Minish777/VibeFetch"; // Убедись, что имя репо совпадает!
+        
         static string Cyan = "\u001b[38;2;139;233;253m";
         static string Purple = "\u001b[38;2;189;147;249m";
         static string White = "\u001b[38;2;248;248;242m";
-        static string Gray = "\u001b[38;2;98;114;164m";
         static string Reset = "\u001b[0m";
 
-        static void Main()
+        static async Task Main(string[] args)
         {
+            // Проверка флага обновления
+            if (args.Contains("--update"))
+            {
+                await RunUpdate();
+                return;
+            }
+
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) WinInit();
 
+            ShowFetch();
+        }
+
+        static async Task RunUpdate()
+        {
+            Console.WriteLine($"{Purple}[*] Checking for updates...{Reset}");
+            try
+            {
+                using var client = new HttpClient();
+                client.DefaultRequestHeaders.Add("User-Agent", "vfetch-updater");
+
+                // 1. Получаем инфу о последнем релизе
+                var release = await client.GetStringAsync($"https://api.github.com/repos/{Repo}/releases/latest");
+                
+                if (release.Contains(Version))
+                {
+                    Console.WriteLine($"{White}[+] You are already using the latest version ({Version}).{Reset}");
+                    return;
+                }
+
+                // 2. Определяем имя файла для скачивания
+                string assetName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "vfetch.exe" : "vfetch";
+                string downloadUrl = $"https://github.com/Root/VibeFetch/releases/latest/download/{assetName}";
+
+                Console.WriteLine($"{Cyan}[>] Downloading {assetName}...{Reset}");
+                
+                var data = await client.GetByteArrayAsync(downloadUrl);
+                string currentExe = Process.GetCurrentProcess().MainModule.FileName;
+                string tempExe = currentExe + ".tmp";
+
+                // 3. Записываем новый файл
+                await File.WriteAllBytesAsync(tempExe, data);
+
+                // 4. Логика замены (разная для ОС)
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    // На Windows нельзя заменить запущенный EXE, используем скрипт-посредник
+                    string cmd = $"/c timeout /t 1 & del \"{currentExe}\" & move \"{tempExe}\" \"{currentExe}\" & echo Update Done!";
+                    Process.Start(new ProcessStartInfo("cmd.exe", cmd) { CreateNoWindow = true });
+                }
+                else
+                {
+                    // На Linux/macOS просто меняем местами и даем права
+                    File.Move(tempExe, currentExe, true);
+                    Process.Start("chmod", $"+x {currentExe}").WaitForExit();
+                }
+
+                Console.WriteLine($"{Purple}[!] Update downloaded. Please restart vfetch.{Reset}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"{White}[-] Update failed: {ex.Message}{Reset}");
+            }
+        }
+
+        static void ShowFetch()
+        {
             Console.Clear();
             Console.WriteLine($"{Cyan}  oooooo     oooo");
             Console.WriteLine($"{Cyan}   `888.     .8'   {Purple}sodrely{White}@{Purple}vfetch{Reset}");
-            Console.WriteLine($"{Cyan}    `888.   .8'    {Gray}--------------------------{Reset}");
-            Console.WriteLine($"{Cyan}     `888. .8'     {Cyan}os      {White}➜  {GetOSName()}");
-            Console.WriteLine($"{Cyan}      `888.8'      {Cyan}host    {White}➜  {Environment.MachineName}");
-            Console.WriteLine($"{Cyan}       `888'       {Cyan}kernel  {White}➜  {GetKernelInfo()}");
-            Console.WriteLine($"{Cyan}        `8'        {Cyan}uptime  {White}➜  {GetUptime()}");
-
-            var (used, total) = GetRamInfo();
-            Console.WriteLine($"                   {Cyan}ram     {White}➜  {used}GB / {total}GB");
-            Console.WriteLine($"\n                   {Cyan}● {Purple}● {Gray}● {White}●");
-        }
-
-        static string GetOSName()
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return "Windows " + Environment.OSVersion.Version.Major;
-            
-            // Читаем название дистрибутива в Linux (например, CachyOS)
-            if (File.Exists("/etc/os-release"))
-            {
-                var line = File.ReadAllLines("/etc/os-release").FirstOrDefault(l => l.StartsWith("PRETTY_NAME="));
-                if (line != null) return line.Split('"')[1];
-            }
-            return "Linux";
-        }
-
-        static string GetKernelInfo()
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return Environment.OSVersion.Version.ToString();
-
-            // Получаем точную версию ядра в Linux
-            try {
-                if (File.Exists("/proc/version"))
-                {
-                    var parts = File.ReadAllText("/proc/version").Split(' ');
-                    return parts[2]; // Обычно третья часть — это версия ядра
-                }
-            } catch {}
-            return "Unknown";
-        }
-
-        static string GetUptime()
-        {
-            var t = TimeSpan.FromMilliseconds(Environment.TickCount64);
-            return $"{t.Hours}h {t.Minutes}m";
-        }
-
-        static (long used, long total) GetRamInfo()
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return (4, 32); // Твой конфиг
-
-            try {
-                if (File.Exists("/proc/meminfo"))
-                {
-                    var lines = File.ReadAllLines("/proc/meminfo");
-                    long totalKb = long.Parse(lines[0].Split(' ', StringSplitOptions.RemoveEmptyEntries)[1]);
-                    long freeKb = long.Parse(lines[1].Split(' ', StringSplitOptions.RemoveEmptyEntries)[1]);
-                    return ((totalKb - freeKb) / 1024 / 1024, totalKb / 1024 / 1024);
-                }
-            } catch {}
-            return (0, 0);
+            Console.WriteLine($"{Cyan}    `888.   .8'    {White}--------------------------{Reset}");
+            Console.WriteLine($"{Cyan}     `888. .8'     {Cyan}os      {White}➜  {RuntimeInformation.OSDescription}");
+            Console.WriteLine($"{Cyan}      `888.8'      {Cyan}version {White}➜  {Version}");
+            Console.WriteLine($"{Cyan}       `888'       {Cyan}kernel  {White}➜  {Environment.OSVersion.Version}");
+            Console.WriteLine($"{Cyan}        `8'        {Cyan}uptime  {White}➜  {TimeSpan.FromMilliseconds(Environment.TickCount64):h\\h\\ m\\m}");
+            Console.WriteLine($"\n                   {Cyan}● {Purple}● {White}●");
         }
 
         [DllImport("kernel32.dll")] static extern IntPtr GetStdHandle(int n);
