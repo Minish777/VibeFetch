@@ -7,7 +7,7 @@ on:
       - 'v*'
 
 permissions:
-  contents: write # Даем права на создание релиза
+  contents: write
 
 jobs:
   build:
@@ -24,109 +24,65 @@ jobs:
       with:
         dotnet-version: 8.0.x
 
-    - name: Build
-      # Публикуем проект. На выходе будет один файл
-      run: dotnet publish *.csproj -c Release -r ${{ matrix.os == 'windows-latest' && 'win-x64' || 'linux-x64' }} --self-contained true /p:PublishSingleFile=true -o ./publish
+    - name: Publish
+      run: |
+        if [ "${{ matrix.os }}" = "windows-latest" ]; then
+          RID=win-x64
+        else
+          RID=linux-x64
+        fi
 
-    - name: Prepare Artifacts
+        dotnet publish *.csproj \
+          -c Release \
+          -r $RID \
+          --self-contained true \
+          /p:PublishSingleFile=true \
+          -o publish
+
+    - name: Rename binary
       shell: bash
       run: |
         cd publish
+
         if [ "${{ matrix.os }}" = "windows-latest" ]; then
-          # Находим любой .exe и называем его vfetch.exe
           mv *.exe vfetch.exe
         else
-          # Находим исполняемый файл (без расширения) и называем vfetch
-          mv $(find . -maxdepth 1 -type f ! -name "*.*") vfetch
+          chmod +x *
+          mv $(find . -type f ! -name "*.*") vfetch
         fi
 
-    - name: Upload
+    - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
         name: vfetch-${{ matrix.os }}
-        path: ./publish/vfetch*
+        path: publish/*
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: build
     runs-on: ubuntu-latest
+
     steps:
     - uses: actions/checkout@v4
+
     - name: Download Windows
       uses: actions/download-artifact@v4
       with:
         name: vfetch-windows-latest
-        path: ./assets/win
+        path: win
+
     - name: Download Linux
       uses: actions/download-artifact@v4
       with:
         name: vfetch-ubuntu-latest
-        path: ./assets/linux
+        path: linux
+
     - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
         files: |
-          ./assets/win/vfetch.exe
-          ./assets/linux/vfetch
-          install.py
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}name: Build and Release
-
-on:
-  push:
-    branches: [ main ] # Сделаем запуск при каждом пуше в main, чтобы проверить работу
-    tags:
-      - 'v*'
-
-jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 8.0.x
-
-    - name: Build
-      # Автоматически находит любой файл .csproj в корне
-      run: dotnet publish *.csproj -c Release -r ${{ matrix.os == 'windows-latest' && 'win-x64' || 'linux-x64' }} --self-contained true /p:PublishSingleFile=true -o ./publish
-
-    - name: Rename Binaries
-      shell: bash
-      run: |
-        if [ "${{ matrix.os }}" = "windows-latest" ]; then
-          mv ./publish/*.exe ./publish/vfetch.exe
-        else
-          # Находим бинарник (он будет называться как проект) и переименовываем в vfetch
-          mv $(find ./publish -type f ! -name "*.*") ./publish/vfetch
-        fi
-
-    - name: Upload Artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: vfetch-${{ matrix.os }}
-        path: ./publish/vfetch*
-
-  release:
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Download Artifacts
-      uses: actions/download-artifact@v4
-    - name: Create Release
-      uses: softprops/action-gh-release@v2
-      with:
-        files: |
-          ./vfetch-windows-latest/vfetch.exe
-          ./vfetch-ubuntu-latest/vfetch
+          win/vfetch.exe
+          linux/vfetch
           install.py
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
