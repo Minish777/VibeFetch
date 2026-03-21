@@ -2,11 +2,11 @@
 %define __strip /bin/true
 %define _build_id_links none
 
-# Полная блокировка генератора зависимостей
+# Запрещаем любые проверки зависимостей на корню
 %define _use_internal_dependency_generator 0
+AutoReqProv: no
 %global __find_provides %{nil}
 %global __find_requires %{nil}
-%define _binary_payload w9.gzdio
 
 Name:           vibefetch
 Version:        1.9.0
@@ -20,15 +20,18 @@ Source0:        vfetch
 VibeFetch v1.9.0.
 
 %prep
+# Просто создаем пустую папку, чтобы rpmbuild не ругался
 mkdir -p %{_builddir}/%{name}-%{version}
-cp %{_sourcedir}/vfetch %{_builddir}/%{name}-%{version}/
 
 %build
 :
 
 %install
 mkdir -p %{buildroot}%{_bindir}
-install -m 755 %{_builddir}/%{name}-%{version}/vfetch %{buildroot}%{_bindir}/vibefetch
+# Копируем напрямую из SOURCES, минуя все промежуточные этапы
+cp %{_sourcedir}/vfetch %{buildroot}%{_bindir}/vibefetch
+chmod 755 %{buildroot}%{_bindir}/vibefetch
 
 %files
-%{_bindir}/vibefetch
+# Указываем файл напрямую
+/usr/bin/vibefetch
