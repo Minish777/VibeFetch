@@ -6,45 +6,45 @@ import subprocess
 
 def install():
     current_os = platform.system()
-    print(f"[*] Starting universal installation for: {current_os}")
+    print(f"[*] Starting installation for: {current_os}")
 
     if current_os == "Windows":
         try:
-            import winreg
+            import winreg # Импорт внутри условия, чтобы не ломать Linux
             exe = "vfetch.exe"
             if not os.path.exists(exe):
-                print(f"[-] Error: {exe} not found in current directory.")
+                print(f"[-] Error: {exe} not found.")
                 return
 
             dest = os.path.join(os.environ["LOCALAPPDATA"], "VibeFetch")
             os.makedirs(dest, exist_ok=True)
             shutil.copy2(exe, os.path.join(dest, exe))
 
-            # Add to User PATH
             with winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment", 0, winreg.KEY_ALL_ACCESS) as key:
                 try:
                     path_val, _ = winreg.QueryValueEx(key, "Path")
                     if dest not in path_val:
                         winreg.SetValueEx(key, "Path", 0, winreg.REG_EXPAND_SZ, f"{path_val};{dest}")
-                except FileNotFoundError:
+                except:
                     winreg.SetValueEx(key, "Path", 0, winreg.REG_EXPAND_SZ, dest)
-            print("[+] Done! Please restart your terminal and type 'vfetch'.")
+            print("[+] Installed! Type 'vfetch' in a new terminal.")
         except Exception as e:
-            print(f"[-] Windows install failed: {e}")
+            print(f"[-] Windows error: {e}")
 
-    elif current_os == "Linux" or current_os == "Darwin": # Darwin - это macOS
+    else:
+        # Универсально для Linux
         exe = "vfetch"
         if not os.path.exists(exe):
-            print(f"[-] Error: {exe} binary not found.")
+            print("[-] Error: 'vfetch' binary not found.")
             return
-
-        print("[*] Requesting sudo to copy binary to /usr/local/bin...")
+        
+        print("[*] Copying to /usr/local/bin...")
         try:
             subprocess.run(["sudo", "cp", exe, "/usr/local/bin/vfetch"], check=True)
             subprocess.run(["sudo", "chmod", "+x", "/usr/local/bin/vfetch"], check=True)
-            print("[+] Successfully installed to /usr/local/bin/vfetch")
+            print("[+] Successfully installed to /usr/local/bin!")
         except Exception as e:
-            print(f"[-] Linux install failed: {e}")
+            print(f"[-] Linux error: {e}")
 
 if __name__ == "__main__":
     install()
