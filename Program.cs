@@ -8,8 +8,7 @@ namespace VibeFetch
 {
     class Program
     {
-        static string Version = "2.1.0";
-        // Цвета Catppuccin Mocha
+        // Палитра Catppuccin Mocha
         static string Mauve = "\u001b[38;2;203;166;247m";    
         static string Sapphire = "\u001b[38;2;116;199;236m"; 
         static string Text = "\u001b[38;2;205;214;244m";      
@@ -37,6 +36,7 @@ namespace VibeFetch
             var (uD, tD) = GetDisk();
             Console.WriteLine($"                   {Sapphire}disk    {Text}➜  {uD}GB / {tD}GB");
             
+            // Цветовые точки
             Console.WriteLine($"\n                   \u001b[48;2;245;224;220m  \u001b[48;2;242;205;205m  \u001b[48;2;203;166;247m  \u001b[48;2;116;199;236m  {Reset}");
         }
 
@@ -45,29 +45,39 @@ namespace VibeFetch
             : RuntimeInformation.OSDescription;
 
         static string GetKernel() => RuntimeInformation.IsOSPlatform(OSPlatform.Linux) 
-            ? Run("uname", "-r") : RuntimeInformation.OSDescription.Split(' ').Last();
+            ? Run("uname", "-r") : "Windows NT";
 
-        static string GetUptime() => RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
-            ? Run("uptime", "-p").Replace("up ", "") : $"{TimeSpan.FromMilliseconds(Environment.TickCount64).Hours}h";
+        static string GetUptime() {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                return Run("uptime", "-p").Replace("up ", "");
+            var t = TimeSpan.FromMilliseconds(Environment.TickCount64);
+            return $"{t.Hours}h {t.Minutes}m";
+        }
 
         static (long, long) GetRam() {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return (4, 32); 
-            var m = File.ReadAllLines("/proc/meminfo");
-            long t = long.Parse(m[0].Split(' ', StringSplitOptions.RemoveEmptyEntries)[1]) / 1024 / 1024;
-            long a = long.Parse(m[2].Split(' ', StringSplitOptions.RemoveEmptyEntries)[1]) / 1024 / 1024;
-            return (t - a, t);
+            try {
+                var m = File.ReadAllLines("/proc/meminfo");
+                long t = long.Parse(m[0].Split(' ', StringSplitOptions.RemoveEmptyEntries)[1]) / 1024 / 1024;
+                long a = long.Parse(m[2].Split(' ', StringSplitOptions.RemoveEmptyEntries)[1]) / 1024 / 1024;
+                return (t - a, t);
+            } catch { return (0, 0); }
         }
 
         static (long, long) GetDisk() {
-            // На Linux берем корень "/", на Windows "C:\"
-            string root = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "C:\\" : "/";
-            var d = new DriveInfo(root);
-            return ((d.TotalSize - d.AvailableFreeSpace) / 1073741824, d.TotalSize / 1073741824);
+            try {
+                // Авто-определение корневого диска
+                string root = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "C:\\" : "/";
+                var d = new DriveInfo(root);
+                return ((d.TotalSize - d.AvailableFreeSpace) / 1073741824, d.TotalSize / 1073741824);
+            } catch { return (0, 0); }
         }
 
         static string Run(string c, string a) {
-            var p = Process.Start(new ProcessStartInfo(c, a) { RedirectStandardOutput = true });
-            return p?.StandardOutput.ReadToEnd().Trim() ?? "";
+            try {
+                var p = Process.Start(new ProcessStartInfo(c, a) { RedirectStandardOutput = true });
+                return p?.StandardOutput.ReadToEnd().Trim() ?? "";
+            } catch { return ""; }
         }
 
         [DllImport("kernel32.dll")] static extern IntPtr GetStdHandle(int n);
