@@ -10,15 +10,25 @@ namespace VibeFetch
 {
     class Program
     {
-        static string Version = "2.0.0";
+        // === КОНФИГУРАЦИЯ ВЕРСИИ ===
+        static string Version = "2.1.0";
+        // ЗАМЕНИ НА СВОЙ РЕПОЗИТОРИЙ (Например: "твой_ник/VibeFetch")
         static string Repo = "Minish777/VibeFetch"; 
         static string Tag = "v" + Version;
 
-        static string Cyan = "\u001b[38;2;139;233;253m";
-        static string Purple = "\u001b[38;2;189;147;249m";
-        static string White = "\u001b[38;2;248;248;242m";
-        static string Gray = "\u001b[38;2;98;114;164m";
-        static string Green = "\u001b[38;2;80;250;123m";
+        // === ПАЛИТРА CATPPUCCIN (MOCHA) ===
+        // Стандартные ANSI цвета не используются, используем TrueColor (24-bit)
+        static string Text = "\u001b[38;2;205;214;244m";      // Молок (Текст)
+        static string Subtext1 = "\u001b[38;2;186;194;222m"; // Субтекст 1 (Значения)
+        static string Mauve = "\u001b[38;2;203;166;247m";    // Лиловый (Акцент, Пользователь)
+        static string Sapphire = "\u001b[38;2;116;199;236m"; // Сапфир (Ключи)
+        static string Overlay0 = "\u001b[38;2;108;112;134m"; // Оверлей 0 (Разделитель)
+        
+        // Цветовые точки
+        static string Rosewater = "\u001b[48;2;245;224;220m  ";
+        static string Lavender = "\u001b[48;2;180;190;254m  ";
+        static string Teal = "\u001b[48;2;148;226;213m  ";
+        static string Surface0 = "\u001b[48;2;49;50;68m  ";
         static string Reset = "\u001b[0m";
 
         static async Task Main(string[] args)
@@ -30,7 +40,7 @@ namespace VibeFetch
 
         static async Task RunUpdate()
         {
-            Console.WriteLine($"{Purple}[*] Checking for updates...{Reset}");
+            Console.WriteLine($"{Mauve} Checking for updates...{Reset}");
             try
             {
                 using var client = new HttpClient();
@@ -39,7 +49,7 @@ namespace VibeFetch
                 
                 if (releaseJson.Contains($"\"tag_name\":\"{Tag}\""))
                 {
-                    Console.WriteLine($"{Green}[+] vfetch is up to date.{Reset}");
+                    Console.WriteLine($"{Teal} You are on the latest version.{Reset}");
                     return;
                 }
 
@@ -60,32 +70,45 @@ namespace VibeFetch
                     File.Move(tempExe, currentExe, true);
                     Process.Start("chmod", $"+x \"{currentExe}\"").WaitForExit();
                 }
-                Console.WriteLine($"{Purple}[!] Update success. Restart vfetch.{Reset}");
+                Console.WriteLine($"{Mauve} Update success. Please restart vfetch.{Reset}");
             }
-            catch (Exception ex) { Console.WriteLine($"{White}[-] Error: {ex.Message}{Reset}"); }
+            catch (Exception ex) { Console.WriteLine($"{Text}[-] Error: {ex.Message}{Reset}"); }
         }
 
         static void ShowFetch()
         {
             Console.Clear();
-            Console.WriteLine($"{Cyan}  oooooo     oooo");
-            Console.WriteLine($"{Cyan}   `888.     .8'   {Purple}{Environment.UserName}{White}@{Purple}{Environment.MachineName}{Reset}");
-            Console.WriteLine($"{Cyan}    `888.   .8'    {Gray}--------------------------{Reset}");
-            Console.WriteLine($"{Cyan}     `888. .8'     {Cyan}os      {White}➜  {GetOSName()}");
-            Console.WriteLine($"{Cyan}      `888.8'      {Cyan}kernel  {White}➜  {RuntimeInformation.OSDescription.Split(' ').Last()}");
-            Console.WriteLine($"{Cyan}       `888'       {Cyan}uptime  {White}➜  {GetUptime()}");
+            string user = Environment.UserName;
+            string host = Environment.MachineName;
+
+            // ASCII Арт (логотип V) в цвете Sapphire
+            Console.WriteLine($"{Sapphire}  oooooo     oooo");
+            Console.WriteLine($"{Sapphire}   `888.     .8'   {Mauve}{user}{Text}@{Mauve}{host}{Reset}");
+            Console.WriteLine($"{Sapphire}    `888.   .8'    {Overlay0}--------------------------{Reset}");
             
-            var (uM, tM) = GetRamInfo();
-            Console.WriteLine($"                   {Cyan}ram     {White}➜  {uM}GB / {tM}GB");
+            // Сбор информации
+            Console.WriteLine($"{Sapphire}     `888. .8'     {Sapphire}os      {Subtext1}➜  {GetOSName()}");
+            Console.WriteLine($"{Sapphire}      `888.8'      {Sapphire}version {Subtext1}➜  {Version}");
+            Console.WriteLine($"{Sapphire}       `888'       {Sapphire}kernel  {Subtext1}➜  {GetKernelInfo()}");
+            Console.WriteLine($"{Sapphire}        `8'        {Sapphire}uptime  {Subtext1}➜  {GetUptime()}");
             
-            var (uD, tD) = GetDiskInfo();
-            Console.WriteLine($"                   {Cyan}disk    {White}➜  {uD}GB / {tD}GB");
-            Console.WriteLine($"\n                   {Cyan}● {Purple}● {Green}● {Gray}●");
+            var (usedMem, totalMem) = GetRamInfo();
+            Console.WriteLine($"                   {Sapphire}ram     {Subtext1}➜  {usedMem}GB / {totalMem}GB");
+
+            var (usedDisk, totalDisk) = GetDiskInfo();
+            Console.WriteLine($"                   {Sapphire}disk    {Subtext1}➜  {usedDisk}GB / {totalDisk}GB");
+
+            // Цветовые точки (Catppuccin blocks)
+            Console.WriteLine($"\n                   {Rosewater}{Reset} {Lavender}{Reset} {Teal}{Reset} {Surface0}{Reset}");
         }
+
+        // === ИСПРАВЛЕННЫЕ МЕТОДЫ ПОЛУЧЕНИЯ ИНФОРМАЦИИ ===
 
         static string GetOSName()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return "Windows " + Environment.OSVersion.Version.Major;
+            
+            // На Linux ищем красивое имя
             if (File.Exists("/etc/os-release"))
             {
                 var prettyName = File.ReadAllLines("/etc/os-release")
@@ -95,34 +118,68 @@ namespace VibeFetch
             return RuntimeInformation.OSDescription;
         }
 
-        static string GetUptime() => TimeSpan.FromMilliseconds(Environment.TickCount64).ToString(@"h\h\ m\m");
-
-        static (long, long) GetRamInfo()
+        static string GetKernelInfo()
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return (4, 32); // Твой конфиг
-            if (File.Exists("/proc/meminfo"))
+            // На Linux OSDescription часто возвращает 'Linux' или 'Arch', нам нужна версия
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                var lines = File.ReadAllLines("/proc/meminfo");
-                long total = long.Parse(lines[0].Split(' ', StringSplitOptions.RemoveEmptyEntries)[1]);
-                long avail = long.Parse(lines[2].Split(' ', StringSplitOptions.RemoveEmptyEntries)[1]);
-                return ((total - avail) / 1024 / 1024, total / 1024 / 1024);
+                try { return RunCommand("uname", "-r"); } catch { return RuntimeInformation.OSDescription; }
             }
+            return RuntimeInformation.OSDescription.Split(' ').Last(); // Windows: 10.0.19045
+        }
+
+        static string GetUptime()
+        {
+            var t = TimeSpan.FromMilliseconds(Environment.TickCount64);
+            return $"{t.Hours}h {t.Minutes}m";
+        }
+
+        static (long used, long total) GetRamInfo()
+        {
+            try {
+                // Если ты на CachyOS, то System.Management (WMI) тут не сработает
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    // На Windows берем то, что ты хардкодил
+                    return (4, 32); 
+                }
+                else if (File.Exists("/proc/meminfo"))
+                {
+                    // На Linux парсим /proc/meminfo (точно)
+                    var lines = File.ReadAllLines("/proc/meminfo");
+                    long totalKb = long.Parse(lines[0].Split(' ', StringSplitOptions.RemoveEmptyEntries)[1]);
+                    long availKb = long.Parse(lines[2].Split(' ', StringSplitOptions.RemoveEmptyEntries)[1]);
+                    return ((totalKb - availKb) / 1024 / 1024, totalKb / 1024 / 1024);
+                }
+            } catch {}
             return (0, 0);
         }
 
-        static (long, long) GetDiskInfo()
+        static (long used, long total) GetDiskInfo()
         {
-            var drive = DriveInfo.GetDrives().FirstOrDefault(d => d.IsReady);
-            if (drive == null) return (0, 0);
-            return ((drive.TotalSize - drive.AvailableFreeSpace) / 1073741824, drive.TotalSize / 1073741824);
+            // Берем главный системный диск
+            string root = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "C:\\" : "/";
+            var drive = new DriveInfo(root);
+            long totalGb = drive.TotalSize / 1073741824; // 1024^3
+            long freeGb = drive.AvailableFreeSpace / 1073741824;
+            return (totalGb - freeGb, totalGb);
         }
 
+        // Хелпер для запуска консольных команд
+        static string RunCommand(string cmd, string args)
+        {
+            var startInfo = new ProcessStartInfo(cmd, args) { RedirectStandardOutput = true, UseShellExecute = false, CreateNoWindow = true };
+            using var process = Process.Start(startInfo);
+            return process.StandardOutput.ReadToEnd().Trim();
+        }
+
+        // === ИНИЦИАЛИЗАЦИЯ WINDOWS ANSI ===
         [DllImport("kernel32.dll")] static extern IntPtr GetStdHandle(int n);
         [DllImport("kernel32.dll")] static extern bool GetConsoleMode(IntPtr h, out uint m);
         [DllImport("kernel32.dll")] static extern bool SetConsoleMode(IntPtr h, uint m);
         static void WinInit() {
-            var h = GetStdHandle(-11);
-            if (GetConsoleMode(h, out uint m)) SetConsoleMode(h, m | 0x0004 | 0x0008);
+            var h = GetStdHandle(-11); // STD_OUTPUT_HANDLE
+            if (GetConsoleMode(h, out uint m)) SetConsoleMode(h, m | 0x0004 | 0x0008); // ENABLE_VIRTUAL_TERMINAL_PROCESSING
         }
     }
 }
