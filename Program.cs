@@ -10,25 +10,22 @@ namespace VibeFetch
 {
     class Program
     {
-        static string Version = "1.9.8";
-        static string Repo = "Minish777/VibeFetch"; // Убедись, что имя репо совпадает!
-        
+        static string Version = "2.0.0";
+        static string Repo = "Minish777/VibeFetch"; // Убедись, что ник твой!
+        static string Tag = "v" + Version;
+
+        // Dracula Palette
         static string Cyan = "\u001b[38;2;139;233;253m";
         static string Purple = "\u001b[38;2;189;147;249m";
         static string White = "\u001b[38;2;248;248;242m";
+        static string Gray = "\u001b[38;2;98;114;164m";
+        static string Green = "\u001b[38;2;80;250;123m";
         static string Reset = "\u001b[0m";
 
         static async Task Main(string[] args)
         {
-            // Проверка флага обновления
-            if (args.Contains("--update"))
-            {
-                await RunUpdate();
-                return;
-            }
-
+            if (args.Contains("--update")) { await RunUpdate(); return; }
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) WinInit();
-
             ShowFetch();
         }
 
@@ -39,62 +36,94 @@ namespace VibeFetch
             {
                 using var client = new HttpClient();
                 client.DefaultRequestHeaders.Add("User-Agent", "vfetch-updater");
-
-                // 1. Получаем инфу о последнем релизе
-                var release = await client.GetStringAsync($"https://api.github.com/repos/{Repo}/releases/latest");
+                var releaseJson = await client.GetStringAsync($"https://api.github.com/repos/{Repo}/releases/latest");
                 
-                if (release.Contains(Version))
+                if (releaseJson.Contains($"\"tag_name\":\"{Tag}\""))
                 {
-                    Console.WriteLine($"{White}[+] You are already using the latest version ({Version}).{Reset}");
+                    Console.WriteLine($"{Green}[+] vfetch is up to date.{Reset}");
                     return;
                 }
 
-                // 2. Определяем имя файла для скачивания
                 string assetName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "vfetch.exe" : "vfetch";
-                string downloadUrl = $"https://github.com/Root/VibeFetch/releases/latest/download/{assetName}";
-
-                Console.WriteLine($"{Cyan}[>] Downloading {assetName}...{Reset}");
-                
+                string downloadUrl = $"https://github.com/{Repo}/releases/latest/download/{assetName}";
                 var data = await client.GetByteArrayAsync(downloadUrl);
                 string currentExe = Process.GetCurrentProcess().MainModule.FileName;
                 string tempExe = currentExe + ".tmp";
-
-                // 3. Записываем новый файл
                 await File.WriteAllBytesAsync(tempExe, data);
 
-                // 4. Логика замены (разная для ОС)
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    // На Windows нельзя заменить запущенный EXE, используем скрипт-посредник
-                    string cmd = $"/c timeout /t 1 & del \"{currentExe}\" & move \"{tempExe}\" \"{currentExe}\" & echo Update Done!";
+                    string cmd = $"/c timeout /t 2 & del \"{currentExe}\" & move \"{tempExe}\" \"{currentExe}\"";
                     Process.Start(new ProcessStartInfo("cmd.exe", cmd) { CreateNoWindow = true });
                 }
                 else
                 {
-                    // На Linux/macOS просто меняем местами и даем права
                     File.Move(tempExe, currentExe, true);
-                    Process.Start("chmod", $"+x {currentExe}").WaitForExit();
+                    Process.Start("chmod", $"+x \"{currentExe}\"").WaitForExit();
                 }
-
-                Console.WriteLine($"{Purple}[!] Update downloaded. Please restart vfetch.{Reset}");
+                Console.WriteLine($"{Purple}[!] Success. Please restart vfetch.{Reset}");
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"{White}[-] Update failed: {ex.Message}{Reset}");
-            }
+            catch (Exception ex) { Console.WriteLine($"{White}[-] Update error: {ex.Message}{Reset}"); }
         }
 
         static void ShowFetch()
         {
             Console.Clear();
             Console.WriteLine($"{Cyan}  oooooo     oooo");
-            Console.WriteLine($"{Cyan}   `888.     .8'   {Purple}sodrely{White}@{Purple}vfetch{Reset}");
-            Console.WriteLine($"{Cyan}    `888.   .8'    {White}--------------------------{Reset}");
-            Console.WriteLine($"{Cyan}     `888. .8'     {Cyan}os      {White}➜  {RuntimeInformation.OSDescription}");
-            Console.WriteLine($"{Cyan}      `888.8'      {Cyan}version {White}➜  {Version}");
-            Console.WriteLine($"{Cyan}       `888'       {Cyan}kernel  {White}➜  {Environment.OSVersion.Version}");
-            Console.WriteLine($"{Cyan}        `8'        {Cyan}uptime  {White}➜  {TimeSpan.FromMilliseconds(Environment.TickCount64):h\\h\\ m\\m}");
-            Console.WriteLine($"\n                   {Cyan}● {Purple}● {White}●");
+            Console.WriteLine($"{Cyan}   `888.     .8'   {Purple}{Environment.UserName}{White}@{Purple}{Environment.MachineName}{Reset}");
+            Console.WriteLine($"{Cyan}    `888.   .8'    {Gray}--------------------------{Reset}");
+            Console.WriteLine($"{Cyan}     `888. .8'     {Cyan}os      {White}➜  {GetOSName()}");
+            Console.WriteLine($"{Cyan}      `888.8'      {Cyan}kernel  {White}➜  {RuntimeInformation.OSDescription.Split(' ').Last()}");
+            Console.WriteLine($"{Cyan}       `888'       {Cyan}uptime  {White}➜  {GetUptime()}");
+            
+            var (uM, tM) = GetRamInfo();
+            Console.WriteLine($"                   {Cyan}ram     {White}➜  {uM}GB / {tM}GB");
+            
+            var (uD, tD) = GetDiskInfo();
+            Console.WriteLine($"                   {Cyan}disk    {White}➜  {uD}GB / {tD}GB");
+            Console.WriteLine($"\n                   {Cyan}● {Purple}● {Green}● {Gray}●");
+        }
+
+        static string GetOSName()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return "Windows " + Environment.OSVersion.Version.Major;
+            if (File.Exists("/etc/os-release"))
+            {
+                var prettyName = File.ReadAllLines("/etc/os-release")
+                    .FirstOrDefault(l => l.StartsWith("PRETTY_NAME="))?.Split('"')[1];
+                return prettyName ?? "Linux";
+            }
+            return RuntimeInformation.OSDescription;
+        }
+
+        static string GetUptime()
+        {
+            var t = TimeSpan.FromMilliseconds(Environment.TickCount64);
+            return $"{t.Hours}h {t.Minutes}m";
+        }
+
+        static (long, long) GetRamInfo()
+        {
+            try {
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return (4, 32); // Твой конфиг
+                if (File.Exists("/proc/meminfo"))
+                {
+                    var lines = File.ReadAllLines("/proc/meminfo");
+                    long total = long.Parse(lines[0].Split(' ', StringSplitOptions.RemoveEmptyEntries)[1]);
+                    long avail = long.Parse(lines[2].Split(' ', StringSplitOptions.RemoveEmptyEntries)[1]);
+                    return ((total - avail) / 1024 / 1024, total / 1024 / 1024);
+                }
+            } catch {}
+            return (0, 0);
+        }
+
+        static (long, long) GetDiskInfo()
+        {
+            try {
+                var drive = DriveInfo.GetDrives().FirstOrDefault(d => d.IsReady);
+                if (drive == null) return (0, 0);
+                return ((drive.TotalSize - drive.AvailableFreeSpace) / 1073741824, drive.TotalSize / 1073741824);
+            } catch { return (0, 0); }
         }
 
         [DllImport("kernel32.dll")] static extern IntPtr GetStdHandle(int n);
