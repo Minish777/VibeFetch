@@ -2,7 +2,6 @@ name: Build and Release
 
 on:
   push:
-    branches: [ main ]
     tags:
       - 'v*'
 
@@ -19,8 +18,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+    - uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
 
@@ -32,18 +30,11 @@ jobs:
           RID=linux-x64
         fi
 
-        dotnet publish *.csproj \
-          -c Release \
-          -r $RID \
-          --self-contained true \
-          /p:PublishSingleFile=true \
-          -o publish
+        dotnet publish VibeFetch.csproj -c Release -r $RID --self-contained true /p:PublishSingleFile=true -o publish
 
-    - name: Rename binary
-      shell: bash
+    - name: Rename
       run: |
         cd publish
-
         if [ "${{ matrix.os }}" = "windows-latest" ]; then
           mv *.exe vfetch.exe
         else
@@ -51,38 +42,23 @@ jobs:
           mv $(find . -type f ! -name "*.*") vfetch
         fi
 
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v4
       with:
         name: vfetch-${{ matrix.os }}
         path: publish/*
 
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
     needs: build
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/download-artifact@v4
 
-    - name: Download Windows
-      uses: actions/download-artifact@v4
-      with:
-        name: vfetch-windows-latest
-        path: win
-
-    - name: Download Linux
-      uses: actions/download-artifact@v4
-      with:
-        name: vfetch-ubuntu-latest
-        path: linux
-
-    - name: Create Release
-      uses: softprops/action-gh-release@v2
+    - uses: softprops/action-gh-release@v2
       with:
         files: |
-          win/vfetch.exe
-          linux/vfetch
+          vfetch-windows-latest/vfetch.exe
+          vfetch-ubuntu-latest/vfetch
           install.py
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
