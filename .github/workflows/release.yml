@@ -3,13 +3,14 @@ name: Build and Release
 on:
   push:
     tags:
-      - 'v*' # Сработает при создании тега, например v2.0.0
+      - 'v*' # Сработает при создании тега, например v2.1.0
 
 jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        # Собираем сразу под две системы
         os: [ubuntu-latest, windows-latest]
         include:
           - os: ubuntu-latest
@@ -25,25 +26,24 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 8.0.x
+        dotnet-version: 8.0.x # Твоя версия .NET
 
     - name: Restore dependencies
-      run: dotnet restore VibeFetch_full.csproj
+      run: dotnet restore vfetch.csproj
 
-    - name: Build and Publish
-      # Тут мы используем именно VibeFetch_full.csproj, как у тебя на скрине
+    - name: Publish
       run: |
         dotnet publish VibeFetch_full.csproj -c Release -r ${{ matrix.os == 'windows-latest' && 'win-x64' || 'linux-x64' }} --self-contained true /p:PublishSingleFile=true /p:PublishTrimmed=false -o ./publish
 
     - name: Rename Artifact (Linux)
       if: matrix.os == 'ubuntu-latest'
-      run: mv ./publish/VibeFetch ./publish/vfetch
+      run: mv ./publish/VibeFetch ./publish/vfetch # Убираем лишнее из названия
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.artifact_name }}
-        path: ./publish/${{ matrix.asset_name }}
+        path: ./publish/${{ asset_name }}
 
   release:
     needs: build
@@ -59,6 +59,7 @@ jobs:
     - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
+        # Сюда попадут оба бинарника и скрипт установки
         files: |
           ./assets/vfetch/vfetch
           ./assets/vfetch.exe/vfetch.exe
