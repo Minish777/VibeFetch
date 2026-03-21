@@ -17,10 +17,10 @@ jobs:
         include:
           - os: ubuntu-latest
             rid: linux-x64
-            output: vfetch
+            ext: ""
           - os: windows-latest
             rid: win-x64
-            output: vfetch.exe
+            ext: ".exe"
 
     steps:
     - uses: actions/checkout@v4
@@ -32,26 +32,23 @@ jobs:
     - name: Publish
       run: dotnet publish VibeFetch.csproj -c Release -r ${{ matrix.rid }} --self-contained true /p:PublishSingleFile=true -o publish
 
-    - name: Rename binary
+    # 👉 ВСЁ — НЕТ IF, НЕТ BASH
+    - name: Rename binary (Windows)
+      if: matrix.os == 'windows-latest'
       run: |
         cd publish
-        dir
-      shell: pwsh
+        ren *.exe vfetch.exe
 
-    - name: Normalize output
+    - name: Rename binary (Linux)
+      if: matrix.os == 'ubuntu-latest'
       run: |
         cd publish
-        if ("${{ matrix.os }}" -eq "windows-latest") {
-          Rename-Item *.exe vfetch.exe
-        } else {
-          chmod +x *
-          mv $(ls | head -n 1) vfetch
-        }
-      shell: bash
+        chmod +x *
+        mv $(ls | head -n 1) vfetch
 
     - uses: actions/upload-artifact@v4
       with:
-        name: ${{ matrix.os }}
+        name: build-${{ matrix.os }}
         path: publish/*
 
   release:
@@ -64,8 +61,8 @@ jobs:
     - uses: softprops/action-gh-release@v2
       with:
         files: |
-          windows-latest/vfetch.exe
-          ubuntu-latest/vfetch
+          build-windows-latest/vfetch.exe
+          build-ubuntu-latest/vfetch
           install.py
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
