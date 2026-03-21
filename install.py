@@ -1,52 +1,51 @@
 import os
+import sys
 import shutil
-import ctypes
-import winreg
+import subprocess
 
-def refresh_env():
-    # Сообщаем Windows, что переменные среды изменились
-    HWND_BROADCAST = 0xFFFF
-    WM_SETTINGCHANGE = 0x001A
-    SMTO_ABORTIFHUNG = 0x0002
-    result = ctypes.c_long()
-    ctypes.windll.user32.SendMessageTimeoutW(
-        HWND_BROADCAST, WM_SETTINGCHANGE, 0, u'Environment', 
-        SMTO_ABORTIFHUNG, 5000, ctypes.byref(result)
-    )
+def install():
+    is_windows = os.name == "nt"
+    exe_name = "vfetch.exe" if is_windows else "vfetch"
+    
+    # Определяем путь к бинарнику (ищем в текущей папке)
+    source_path = os.path.join(os.getcwd(), exe_name)
 
-def install_windows():
-    exe_name = "vfetch.exe"
-    install_dir = r"C:\vfetch"
-    
-    # 1. Копирование
-    if not os.path.exists(install_dir):
-        os.makedirs(install_dir)
-    
-    source = os.path.join(os.getcwd(), exe_name)
-    if os.path.exists(source):
-        shutil.copy2(source, os.path.join(install_dir, exe_name))
-        print(f"[+] Файл скопирован в {install_dir}")
-    else:
-        print("[-] Ошибка: vfetch.exe не найден в текущей папке!")
+    if not os.path.exists(source_path):
+        print(f"[-] Error: {exe_name} not found in current folder!")
         return
 
-    # 2. Запись в PATH
-    key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment", 0, winreg.KEY_ALL_ACCESS)
-    try:
-        path_val, _ = winreg.QueryValueEx(key, "Path")
-        if install_dir.lower() not in path_val.lower():
-            winreg.SetValueEx(key, "Path", 0, winreg.REG_EXPAND_SZ, f"{path_val};{install_dir}")
-            refresh_env()
-            print("[+] Путь добавлен в реестр и обновлен.")
-        else:
-            print("[!] Путь уже был в системе.")
-    finally:
-        winreg.CloseKey(key)
+    if is_windows:
+        import winreg  # Импортируем только внутри блока Windows
+        import ctypes
+        
+        install_dir = r"C:\vfetch"
+        if not os.path.exists(install_dir):
+            os.makedirs(install_dir)
+        
+        shutil.copy2(source_path, os.path.join(install_dir, exe_name))
+
+        # Запись в PATH
+        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment", 0, winreg.KEY_ALL_ACCESS)
+        try:
+            path_val, _ = winreg.QueryValueEx(key, "Path")
+            if install_dir.lower() not in path_val.lower():
+                winreg.SetValueEx(key, "Path", 0, winreg.REG_EXPAND_SZ, f"{path_val};{install_dir}")
+                print(f"[+] Added {install_dir} to PATH.")
+        finally:
+            winreg.CloseKey(key)
+        print("[SUCCESS] Restart CMD and type 'vfetch'")
+
+    else:
+        # Логика для Linux (CachyOS)
+        target = "/usr/local/bin/vfetch"
+        print(f"[*] Installing to {target}...")
+        try:
+            # Используем sudo для копирования в системную папку
+            subprocess.run(["sudo", "cp", source_path, target], check=True)
+            subprocess.run(["sudo", "chmod", "+x", target], check=True)
+            print("[SUCCESS] Global command 'vfetch' is now available!")
+        except Exception as e:
+            print(f"[-] Failed to install: {e}")
 
 if __name__ == "__main__":
-    if os.name == "nt":
-        install_windows()
-        print("\nГотово! Попробуй открыть НОВОЕ окно CMD.")
-    else:
-        print("Для Linux используй: sudo cp vfetch /usr/local/bin/")
-    input("\nНажми Enter для выхода...")
+    install()
