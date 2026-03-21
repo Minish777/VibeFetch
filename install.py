@@ -1,51 +1,50 @@
 import os
 import sys
+import platform
 import shutil
 import subprocess
 
 def install():
-    is_windows = os.name == "nt"
-    exe_name = "vfetch.exe" if is_windows else "vfetch"
-    
-    # Определяем путь к бинарнику (ищем в текущей папке)
-    source_path = os.path.join(os.getcwd(), exe_name)
+    current_os = platform.system()
+    print(f"[*] Starting universal installation for: {current_os}")
 
-    if not os.path.exists(source_path):
-        print(f"[-] Error: {exe_name} not found in current folder!")
-        return
-
-    if is_windows:
-        import winreg  # Импортируем только внутри блока Windows
-        import ctypes
-        
-        install_dir = r"C:\vfetch"
-        if not os.path.exists(install_dir):
-            os.makedirs(install_dir)
-        
-        shutil.copy2(source_path, os.path.join(install_dir, exe_name))
-
-        # Запись в PATH
-        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment", 0, winreg.KEY_ALL_ACCESS)
+    if current_os == "Windows":
         try:
-            path_val, _ = winreg.QueryValueEx(key, "Path")
-            if install_dir.lower() not in path_val.lower():
-                winreg.SetValueEx(key, "Path", 0, winreg.REG_EXPAND_SZ, f"{path_val};{install_dir}")
-                print(f"[+] Added {install_dir} to PATH.")
-        finally:
-            winreg.CloseKey(key)
-        print("[SUCCESS] Restart CMD and type 'vfetch'")
+            import winreg
+            exe = "vfetch.exe"
+            if not os.path.exists(exe):
+                print(f"[-] Error: {exe} not found in current directory.")
+                return
 
-    else:
-        # Логика для Linux (CachyOS)
-        target = "/usr/local/bin/vfetch"
-        print(f"[*] Installing to {target}...")
-        try:
-            # Используем sudo для копирования в системную папку
-            subprocess.run(["sudo", "cp", source_path, target], check=True)
-            subprocess.run(["sudo", "chmod", "+x", target], check=True)
-            print("[SUCCESS] Global command 'vfetch' is now available!")
+            dest = os.path.join(os.environ["LOCALAPPDATA"], "VibeFetch")
+            os.makedirs(dest, exist_ok=True)
+            shutil.copy2(exe, os.path.join(dest, exe))
+
+            # Add to User PATH
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment", 0, winreg.KEY_ALL_ACCESS) as key:
+                try:
+                    path_val, _ = winreg.QueryValueEx(key, "Path")
+                    if dest not in path_val:
+                        winreg.SetValueEx(key, "Path", 0, winreg.REG_EXPAND_SZ, f"{path_val};{dest}")
+                except FileNotFoundError:
+                    winreg.SetValueEx(key, "Path", 0, winreg.REG_EXPAND_SZ, dest)
+            print("[+] Done! Please restart your terminal and type 'vfetch'.")
         except Exception as e:
-            print(f"[-] Failed to install: {e}")
+            print(f"[-] Windows install failed: {e}")
+
+    elif current_os == "Linux" or current_os == "Darwin": # Darwin - это macOS
+        exe = "vfetch"
+        if not os.path.exists(exe):
+            print(f"[-] Error: {exe} binary not found.")
+            return
+
+        print("[*] Requesting sudo to copy binary to /usr/local/bin...")
+        try:
+            subprocess.run(["sudo", "cp", exe, "/usr/local/bin/vfetch"], check=True)
+            subprocess.run(["sudo", "chmod", "+x", "/usr/local/bin/vfetch"], check=True)
+            print("[+] Successfully installed to /usr/local/bin/vfetch")
+        except Exception as e:
+            print(f"[-] Linux install failed: {e}")
 
 if __name__ == "__main__":
     install()
