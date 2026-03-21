@@ -2,23 +2,16 @@ name: Build and Release
 
 on:
   push:
+    branches: [ main ] # Сделаем запуск при каждом пуше в main, чтобы проверить работу
     tags:
-      - 'v*' # Сработает при создании тега, например v2.1.0
+      - 'v*'
 
 jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        # Собираем сразу под две системы
         os: [ubuntu-latest, windows-latest]
-        include:
-          - os: ubuntu-latest
-            artifact_name: vfetch
-            asset_name: vfetch
-          - os: windows-latest
-            artifact_name: vfetch.exe
-            asset_name: vfetch.exe
 
     steps:
     - uses: actions/checkout@v4
@@ -26,43 +19,42 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 8.0.x # Твоя версия .NET
+        dotnet-version: 8.0.x
 
-    - name: Restore dependencies
-      run: dotnet restore vfetch.csproj
+    - name: Build
+      # Автоматически находит любой файл .csproj в корне
+      run: dotnet publish *.csproj -c Release -r ${{ matrix.os == 'windows-latest' && 'win-x64' || 'linux-x64' }} --self-contained true /p:PublishSingleFile=true -o ./publish
 
-    - name: Publish
+    - name: Rename Binaries
+      shell: bash
       run: |
-        dotnet publish VibeFetch_full.csproj -c Release -r ${{ matrix.os == 'windows-latest' && 'win-x64' || 'linux-x64' }} --self-contained true /p:PublishSingleFile=true /p:PublishTrimmed=false -o ./publish
-
-    - name: Rename Artifact (Linux)
-      if: matrix.os == 'ubuntu-latest'
-      run: mv ./publish/VibeFetch ./publish/vfetch # Убираем лишнее из названия
+        if [ "${{ matrix.os }}" = "windows-latest" ]; then
+          mv ./publish/*.exe ./publish/vfetch.exe
+        else
+          # Находим бинарник (он будет называться как проект) и переименовываем в vfetch
+          mv $(find ./publish -type f ! -name "*.*") ./publish/vfetch
+        fi
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ matrix.artifact_name }}
-        path: ./publish/${{ asset_name }}
+        name: vfetch-${{ matrix.os }}
+        path: ./publish/vfetch*
 
   release:
+    if: startsWith(github.ref, 'refs/tags/v')
     needs: build
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-
-    - name: Download All Artifacts
+    - name: Download Artifacts
       uses: actions/download-artifact@v4
-      with:
-        path: ./assets
-
     - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
-        # Сюда попадут оба бинарника и скрипт установки
         files: |
-          ./assets/vfetch/vfetch
-          ./assets/vfetch.exe/vfetch.exe
+          ./vfetch-windows-latest/vfetch.exe
+          ./vfetch-ubuntu-latest/vfetch
           install.py
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
