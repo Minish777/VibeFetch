@@ -8,7 +8,6 @@ namespace VibeFetch
 {
     class Program
     {
-        // Catppuccin Mocha palette
         static readonly string Mauve = "\u001b[38;2;203;166;247m";
         static readonly string Sapphire = "\u001b[38;2;116;199;236m";
         static readonly string Text = "\u001b[38;2;205;214;244m";
@@ -18,45 +17,39 @@ namespace VibeFetch
         static void Main()
         {
             InitConsole();
-
             Console.Clear();
 
             string user = Environment.UserName;
             string host = Environment.MachineName;
 
-            PrintHeader(user, host);
-            PrintSystemInfo();
-            PrintColors();
+            Header(user, host);
+
+            Line("os", GetOS());
+            Line("kernel", GetKernel());
+            Line("uptime", GetUptime());
+
+            var (ramUsed, ramTotal) = GetRam();
+            Line("ram", $"{ramUsed}GB / {ramTotal}GB");
+
+            var (diskUsed, diskTotal) = GetDisk();
+            Line("disk", $"{diskUsed}GB / {diskTotal}GB");
+
+            Colors();
         }
 
-        // ---------------- UI ----------------
-
-        static void PrintHeader(string user, string host)
+        static void Header(string user, string host)
         {
             Console.WriteLine($"{Sapphire}  oooooo     oooo");
             Console.WriteLine($"{Sapphire}   `888.     .8'   {Mauve}{user}{Text}@{Mauve}{host}{Reset}");
             Console.WriteLine($"{Sapphire}    `888.   .8'    {Overlay}--------------------------{Reset}");
         }
 
-        static void PrintSystemInfo()
-        {
-            WriteLine("os", GetOS());
-            WriteLine("kernel", GetKernel());
-            WriteLine("uptime", GetUptime());
-
-            var (usedRam, totalRam) = GetRam();
-            WriteLine("ram", $"{usedRam}GB / {totalRam}GB");
-
-            var (usedDisk, totalDisk) = GetDisk();
-            WriteLine("disk", $"{usedDisk}GB / {totalDisk}GB");
-        }
-
-        static void WriteLine(string key, string value)
+        static void Line(string key, string value)
         {
             Console.WriteLine($"                   {Sapphire}{key,-7}{Text}➜  {value}");
         }
 
-        static void PrintColors()
+        static void Colors()
         {
             Console.WriteLine($"\n                   " +
                 "\u001b[48;2;245;224;220m  " +
@@ -83,10 +76,7 @@ namespace VibeFetch
 
                 return RuntimeInformation.OSDescription;
             }
-            catch
-            {
-                return "Unknown";
-            }
+            catch { return "Unknown"; }
         }
 
         static string GetKernel()
@@ -105,57 +95,56 @@ namespace VibeFetch
             try
             {
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                {
-                    var result = Run("uptime", "-p").Replace("up ", "");
-                    return string.IsNullOrWhiteSpace(result) ? "just started" : result;
-                }
+                    return Run("uptime", "-p").Replace("up ", "");
 
                 var t = TimeSpan.FromMilliseconds(Environment.TickCount64);
                 return $"{(int)t.TotalHours}h {t.Minutes}m";
             }
-            catch
-            {
-                return "Unknown";
-            }
+            catch { return "Unknown"; }
         }
 
-        static (long used, long total) GetRam()
+        static (long, long) GetRam()
         {
             try
             {
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    var ci = new Microsoft.VisualBasic.Devices.ComputerInfo();
+                    string output = Run("wmic", "OS get FreePhysicalMemory,TotalVisibleMemorySize /Value");
 
-                    long total = (long)ci.TotalPhysicalMemory / 1073741824;
-                    long available = (long)ci.AvailablePhysicalMemory / 1073741824;
+                    long total = 0;
+                    long free = 0;
 
-                    return (total - available, total);
+                    foreach (var line in output.Split('\n'))
+                    {
+                        if (line.StartsWith("TotalVisibleMemorySize="))
+                            total = long.Parse(line.Split('=')[1]) / 1024 / 1024;
+
+                        if (line.StartsWith("FreePhysicalMemory="))
+                            free = long.Parse(line.Split('=')[1]) / 1024 / 1024;
+                    }
+
+                    return (total - free, total);
                 }
 
                 var lines = File.ReadAllLines("/proc/meminfo");
 
-                long totalMem = ParseMeminfo(lines, "MemTotal");
-                long availableMem = ParseMeminfo(lines, "MemAvailable");
+                long totalMem = Parse(lines, "MemTotal");
+                long freeMem = Parse(lines, "MemAvailable");
 
-                return (totalMem - availableMem, totalMem);
+                return (totalMem - freeMem, totalMem);
             }
-            catch
-            {
-                return (0, 0);
-            }
+            catch { return (0, 0); }
         }
 
-        static long ParseMeminfo(string[] lines, string key)
+        static long Parse(string[] lines, string key)
         {
             var line = lines.FirstOrDefault(l => l.StartsWith(key));
             if (line == null) return 0;
 
-            var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            return long.Parse(parts[1]) / 1024 / 1024;
+            return long.Parse(line.Split(' ', StringSplitOptions.RemoveEmptyEntries)[1]) / 1024 / 1024;
         }
 
-        static (long used, long total) GetDisk()
+        static (long, long) GetDisk()
         {
             try
             {
@@ -167,15 +156,12 @@ namespace VibeFetch
 
                 return (used, total);
             }
-            catch
-            {
-                return (0, 0);
-            }
+            catch { return (0, 0); }
         }
 
         // ---------------- UTILS ----------------
 
-        static string Run(string command, string args)
+        static string Run(string cmd, string args)
         {
             try
             {
@@ -183,10 +169,9 @@ namespace VibeFetch
                 {
                     StartInfo = new ProcessStartInfo
                     {
-                        FileName = command,
+                        FileName = cmd,
                         Arguments = args,
                         RedirectStandardOutput = true,
-                        RedirectStandardError = true,
                         UseShellExecute = false,
                         CreateNoWindow = true
                     }
@@ -198,10 +183,7 @@ namespace VibeFetch
 
                 return output.Trim();
             }
-            catch
-            {
-                return "";
-            }
+            catch { return ""; }
         }
 
         static void InitConsole()
@@ -210,19 +192,16 @@ namespace VibeFetch
             {
                 try
                 {
-                    var handle = GetStdHandle(-11);
-                    if (GetConsoleMode(handle, out uint mode))
-                    {
-                        SetConsoleMode(handle, mode | 0x0004 | 0x0008);
-                    }
+                    var h = GetStdHandle(-11);
+                    if (GetConsoleMode(h, out uint mode))
+                        SetConsoleMode(h, mode | 0x0004 | 0x0008);
                 }
                 catch { }
             }
         }
 
-        // Windows ANSI fix
-        [DllImport("kernel32.dll")] static extern IntPtr GetStdHandle(int nStdHandle);
-        [DllImport("kernel32.dll")] static extern bool GetConsoleMode(IntPtr hConsoleHandle, out uint lpMode);
-        [DllImport("kernel32.dll")] static extern bool SetConsoleMode(IntPtr hConsoleHandle, uint dwMode);
+        [DllImport("kernel32.dll")] static extern IntPtr GetStdHandle(int n);
+        [DllImport("kernel32.dll")] static extern bool GetConsoleMode(IntPtr h, out uint m);
+        [DllImport("kernel32.dll")] static extern bool SetConsoleMode(IntPtr h, uint m);
     }
 }
