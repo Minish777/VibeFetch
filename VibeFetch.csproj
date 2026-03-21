@@ -9,6 +9,9 @@
 
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
+
+    <!-- Чтобы не ломался trim -->
+    <PublishTrimmed>false</PublishTrimmed>
   </PropertyGroup>
 
 </Project>
