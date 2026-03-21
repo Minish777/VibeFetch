@@ -36,7 +36,6 @@ namespace VibeFetch
             var (uD, tD) = GetDisk();
             Console.WriteLine($"                   {Sapphire}disk    {Text}➜  {uD}GB / {tD}GB");
             
-            // Цветовые точки
             Console.WriteLine($"\n                   \u001b[48;2;245;224;220m  \u001b[48;2;242;205;205m  \u001b[48;2;203;166;247m  \u001b[48;2;116;199;236m  {Reset}");
         }
 
@@ -48,14 +47,16 @@ namespace VibeFetch
             ? Run("uname", "-r") : "Windows NT";
 
         static string GetUptime() {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                return Run("uptime", "-p").Replace("up ", "");
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
+                var up = Run("uptime", "-p").Replace("up ", "");
+                return string.IsNullOrEmpty(up) ? "just started" : up;
+            }
             var t = TimeSpan.FromMilliseconds(Environment.TickCount64);
             return $"{t.Hours}h {t.Minutes}m";
         }
 
         static (long, long) GetRam() {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return (4, 32); 
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return (4, 32); // Твой конфиг
             try {
                 var m = File.ReadAllLines("/proc/meminfo");
                 long t = long.Parse(m[0].Split(' ', StringSplitOptions.RemoveEmptyEntries)[1]) / 1024 / 1024;
@@ -66,7 +67,7 @@ namespace VibeFetch
 
         static (long, long) GetDisk() {
             try {
-                // Авто-определение корневого диска
+                // В Linux ищем корень, в Windows диск C
                 string root = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "C:\\" : "/";
                 var d = new DriveInfo(root);
                 return ((d.TotalSize - d.AvailableFreeSpace) / 1073741824, d.TotalSize / 1073741824);
