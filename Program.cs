@@ -11,10 +11,9 @@ namespace VibeFetch
     class Program
     {
         static string Version = "2.0.0";
-        static string Repo = "Minish777/VibeFetch"; // Убедись, что ник твой!
+        static string Repo = "Minish777/VibeFetch"; 
         static string Tag = "v" + Version;
 
-        // Dracula Palette
         static string Cyan = "\u001b[38;2;139;233;253m";
         static string Purple = "\u001b[38;2;189;147;249m";
         static string White = "\u001b[38;2;248;248;242m";
@@ -61,9 +60,9 @@ namespace VibeFetch
                     File.Move(tempExe, currentExe, true);
                     Process.Start("chmod", $"+x \"{currentExe}\"").WaitForExit();
                 }
-                Console.WriteLine($"{Purple}[!] Success. Please restart vfetch.{Reset}");
+                Console.WriteLine($"{Purple}[!] Update success. Restart vfetch.{Reset}");
             }
-            catch (Exception ex) { Console.WriteLine($"{White}[-] Update error: {ex.Message}{Reset}"); }
+            catch (Exception ex) { Console.WriteLine($"{White}[-] Error: {ex.Message}{Reset}"); }
         }
 
         static void ShowFetch()
@@ -96,34 +95,26 @@ namespace VibeFetch
             return RuntimeInformation.OSDescription;
         }
 
-        static string GetUptime()
-        {
-            var t = TimeSpan.FromMilliseconds(Environment.TickCount64);
-            return $"{t.Hours}h {t.Minutes}m";
-        }
+        static string GetUptime() => TimeSpan.FromMilliseconds(Environment.TickCount64).ToString(@"h\h\ m\m");
 
         static (long, long) GetRamInfo()
         {
-            try {
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return (4, 32); // Твой конфиг
-                if (File.Exists("/proc/meminfo"))
-                {
-                    var lines = File.ReadAllLines("/proc/meminfo");
-                    long total = long.Parse(lines[0].Split(' ', StringSplitOptions.RemoveEmptyEntries)[1]);
-                    long avail = long.Parse(lines[2].Split(' ', StringSplitOptions.RemoveEmptyEntries)[1]);
-                    return ((total - avail) / 1024 / 1024, total / 1024 / 1024);
-                }
-            } catch {}
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return (4, 32); // Твой конфиг
+            if (File.Exists("/proc/meminfo"))
+            {
+                var lines = File.ReadAllLines("/proc/meminfo");
+                long total = long.Parse(lines[0].Split(' ', StringSplitOptions.RemoveEmptyEntries)[1]);
+                long avail = long.Parse(lines[2].Split(' ', StringSplitOptions.RemoveEmptyEntries)[1]);
+                return ((total - avail) / 1024 / 1024, total / 1024 / 1024);
+            }
             return (0, 0);
         }
 
         static (long, long) GetDiskInfo()
         {
-            try {
-                var drive = DriveInfo.GetDrives().FirstOrDefault(d => d.IsReady);
-                if (drive == null) return (0, 0);
-                return ((drive.TotalSize - drive.AvailableFreeSpace) / 1073741824, drive.TotalSize / 1073741824);
-            } catch { return (0, 0); }
+            var drive = DriveInfo.GetDrives().FirstOrDefault(d => d.IsReady);
+            if (drive == null) return (0, 0);
+            return ((drive.TotalSize - drive.AvailableFreeSpace) / 1073741824, drive.TotalSize / 1073741824);
         }
 
         [DllImport("kernel32.dll")] static extern IntPtr GetStdHandle(int n);
