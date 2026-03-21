@@ -1,157 +1,68 @@
-![Version](https://img.shields.io/badge/version-1.9.0-blue)
-![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?logo=.net&logoColor=white)
-![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
-![License](https://img.shields.io/badge/license-MIT-green)
-![Status](https://img.shields.io/badge/status-stable-brightgreen)
+# ⚡ VibeFetch (v2.0 Umad)
+
+![Version](https://img.shields.io/badge/version-2.0.0--Umad-bd93f9?style=for-the-badge)
+![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?style=for-the-badge&logo=.net&logoColor=white)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20CachyOS-8be9fd?style=for-the-badge)
+![License](https://img.shields.io/badge/license-MIT-50fa7b?style=for-the-badge)
+
+**VibeFetch** — это эстетичный, молниеносный и умный системный информатор, написанный на **C# (.NET 8)**. Он создан для терминальных джанки, которые ценят палитру **Dracula Theme** и хотят знать реальное состояние своего железа без лишнего мусора.
+
+Это не просто скриншот, это живые данные вашей системы.
 
 ---
 
-# ⚡ VibeFetch
+## 🐲 Что нового в версии 2.0 (Umad)
 
-> **Minimalist & aesthetic system information tool for terminal users**
-
----
-
-## 🧾 Описание
-
-**VibeFetch** — это сверхбыстрая утилита для отображения информации о системе, написанная на **C# (.NET 8)**.
-
-Проект создан для тех, кто ценит:
-
-* чистоту консоли
-* минимализм
-* высокую производительность
-
-Никакого лишнего вывода — только полезная информация в эстетичной оболочке в стиле **Dracula Theme**.
+* 🧠 **Честный RAM**: Больше никаких фейковых данных. Программа реально опрашивает Windows (через WMI) и Linux (через `/proc/meminfo`), показывая точное использование оперативной памяти.
+* 💥 **НОВАЯ ФИЧА — Диски!**: Добавлена строка `disk`, показывающая использование главного системного раздела (в ГБ). Теперь вы знаете, сколько места осталось под игры.
+* 🚀 **Linux-Native**: Глубокое определение дистрибутива. Вместо "Linux/macOS" вы увидите гордое "CachyOS" или "Arch Linux".
+* 🔄 **Умное Автообновление**: Флаг `--update` переписан для большей надежности на кроссплатформенных системах.
 
 ---
 
-## ✨ Особенности
+## ✨ Ключевые фишки
 
-* 🎨 **Dracula Theme** — тщательно подобранная цветовая палитра (HEX), совместимая с современными терминалами
-* 🚀 **High Performance** — написан на **.NET 8**, оптимизирован под x64
-* 🛠 **Auto-Installer (Windows)** — Python-скрипт:
-
-  * автоматически добавляет программу в PATH
-  * упрощает установку
-  * избавляет от ручной настройки
+* 🎨 **Dracula Aesthetics** — идеально подобранные ANSI-цвета, совместимые с TrueColor терминалами.
+* 🚀 **High Performance** — компиляция в Single File, мгновенный запуск.
+* 🔄 **Self-Update** — встроенная система обновления одной командой прямо из терминала.
+* 🛠 **Smart Installer** — универсальный Python-скрипт с поддержкой `PATH` (Windows) и `sudo` (Linux).
 
 ---
 
 ## 📦 Установка
 
-### 🪟 Windows (рекомендуется)
+### 🪟 Windows (Powershell/CMD)
+1. Скачайте `vfetch.exe` и `install.py` из [Releases](https://github.com/Minish777/VibeFetch/releases).
+2. Запустите установщик:
+   ```bash
+   python install.py
 
-1. Скачайте последнюю версию из **Releases**
-2. Поместите в одну папку:
+   Откройте новое окно терминала и просто введите vfetch.
 
-   * `vfetch.exe`
-   * `install.py`
-3. Запустите:
+🐧 Linux (CachyOS / Arch / Ubuntu)
 
-```bash
-python install.py
-```
+Соберите бинарник и добавьте его в системный путь:
+Bash
 
-4. Перезапустите терминал
-5. Используйте:
-
-```bash
-vfetch
-```
-
----
-
-### 🐧 Linux / 🍎 macOS
-
-Если вы собираете из исходников:
-
-```bash
+# Убедитесь, что установлен dotnet-sdk
 dotnet publish -c Release -r linux-x64 --self-contained true /p:PublishSingleFile=true
-```
-
-После сборки бинарник будет находиться здесь:
-
-```
-bin/Release/net8.0/linux-x64/publish/
-```
-
-Установка:
-
-```bash
 sudo cp ./bin/Release/net8.0/linux-x64/publish/vfetch /usr/local/bin/
 sudo chmod +x /usr/local/bin/vfetch
-```
 
----
+🔄 Обновление
 
-## 🛠 Сборка из исходников
+Забудьте про ручное скачивание новых версий. Просто введите команду:
+Bash
 
-Требуется:
+vfetch --update
 
-* **.NET 8 SDK**
+Программа автоматически проверит наличие новой версии на GitHub, скачает актуальный бинарник под вашу ОС и заменит старый файл.
+🤝 Команда проекта
 
-### Windows
+    sodrely — ведущий разработчик, идейный вдохновитель.
 
-```bash
-dotnet publish -r win-x64 -c Release --self-contained true /p:PublishSingleFile=true /p:PublishTrimmed=true
-```
+    Gemini AI — архитектура кроссплатформенности, логика автообновления.
 
-### Linux
+⚠️ Статус проекта
 
-```bash
-dotnet publish -r linux-x64 -c Release --self-contained true /p:PublishSingleFile=true
-```
-
----
-
-## 📜 История обновлений
-
-### v1.9.0 (текущая)
-
-* ⚡ **Smart Refresh**
-  Добавлена функция `refresh_env()` — Windows мгновенно обновляет PATH без перезагрузки
-
-* 🧠 **Registry Overdrive**
-  Прямое редактирование реестра через Python для более надежной установки
-
----
-
-### v1.8.5
-
-* 🌍 **Cross-OS Logic**
-  Исправлены критические ошибки запуска на Linux (связанные с WinAPI)
-
-* 📊 **UI Polish**
-  Добавлена полоса прогресса для отображения оперативной памяти
-
----
-
-### v1.7.0 — v1.8.0
-
-* 🔄 Переход с **C → C#**
-* 🌐 Добавлена проверка обновлений через GitHub API
-
----
-
-### v1.0.0
-
-* 🚀 Первая стабильная версия на языке **C**
-
----
-
-## 🤝 Авторы
-
-Создано:
-
-* **sodrely**
-* Gemini AI
-
----
-
-## ⚠️ Примечание
-
-Linux и macOS поддержка пока не полностью протестирована.
-Если вы обнаружите ошибки или нестабильную работу — создайте issue или сообщите о проблеме. Это поможет улучшить проект.
-
----
+Версия v2.0 стабильна для Windows 10/11 и CachyOS. Если вы нашли баг на другой системе — пожалуйста, создайте Issue.
