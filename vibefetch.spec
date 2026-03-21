@@ -1,23 +1,26 @@
+# Полностью отключаем любые скрипты обработки
 %define debug_package %{nil}
 %define __strip /bin/true
 %define _build_id_links none
-%undefine _missing_build_ids_terminate_build
+
+# Это уберет ошибку с "v6 packages" и зависимостями
 %define _use_internal_dependency_generator 0
-AutoReqProv: no
+%global __find_provides %{nil}
+%global __find_requires %{nil}
 
 Name:           vibefetch
 Version:        1.9.0
-Release:        1%{?dist}
-Summary:        A stylish system fetch utility written in C#
+Release:        1
+Summary:        A stylish system fetch utility
 License:        MIT
 
 Source0:        vfetch
 
 %description
-VibeFetch v1.9.0. Built on CachyOS.
+VibeFetch v1.9.0. Aesthetic and fast.
 
 %prep
-rm -rf %{_builddir}/%{name}-%{version}
+# Создаем папку сборки
 mkdir -p %{_builddir}/%{name}-%{version}
 cp %{_sourcedir}/vfetch %{_builddir}/%{name}-%{version}/
 
@@ -25,15 +28,9 @@ cp %{_sourcedir}/vfetch %{_builddir}/%{name}-%{version}/
 :
 
 %install
-rm -rf %{buildroot}
+# Установка напрямую в buildroot
 mkdir -p %{buildroot}%{_bindir}
-install -p -m 755 %{_builddir}/%{name}-%{version}/vfetch %{buildroot}%{_bindir}/vibefetch
+install -m 755 %{_builddir}/%{name}-%{version}/vfetch %{buildroot}%{_bindir}/vibefetch
 
 %files
-%defattr(-,root,root,-)
 %{_bindir}/vibefetch
-
-%changelog
-* Sat Mar 21 2026 sodrely <sodrely@github.com> - 1.9.0-1
-- Native CachyOS build
-- Fixed binary corruption by disabling rpm-strip
