@@ -8,45 +8,44 @@ namespace VibeFetch
 {
     class Program
     {
-        static readonly string Mauve = "\u001b[38;2;203;166;247m";
-        static readonly string Sapphire = "\u001b[38;2;116;199;236m";
-        static readonly string Text = "\u001b[38;2;205;214;244m";
-        static readonly string Overlay = "\u001b[38;2;108;112;134m";
-        static readonly string Reset = "\u001b[0m";
+        static readonly string C1 = "\u001b[38;2;116;199;236m";
+        static readonly string C2 = "\u001b[38;2;203;166;247m";
+        static readonly string C3 = "\u001b[38;2;205;214;244m";
+        static readonly string C4 = "\u001b[38;2;108;112;134m";
+        static readonly string R = "\u001b[0m";
 
         static void Main()
         {
-            InitConsole();
-            Console.Clear();
+            EnableAnsi();
+            SafeClear();
 
-            string user = Environment.UserName;
-            string host = Environment.MachineName;
+            Header();
 
-            Header(user, host);
+            Print("os", GetOS());
+            Print("kernel", GetKernel());
+            Print("uptime", GetUptime());
 
-            Line("os", GetOS());
-            Line("kernel", GetKernel());
-            Line("uptime", GetUptime());
+            var ram = GetRam();
+            Print("ram", $"{ram.used}GB / {ram.total}GB");
 
-            var (ramUsed, ramTotal) = GetRam();
-            Line("ram", $"{ramUsed}GB / {ramTotal}GB");
-
-            var (diskUsed, diskTotal) = GetDisk();
-            Line("disk", $"{diskUsed}GB / {diskTotal}GB");
+            var disk = GetDisk();
+            Print("disk", $"{disk.used}GB / {disk.total}GB");
 
             Colors();
         }
 
-        static void Header(string user, string host)
+        // ---------------- UI ----------------
+
+        static void Header()
         {
-            Console.WriteLine($"{Sapphire}  oooooo     oooo");
-            Console.WriteLine($"{Sapphire}   `888.     .8'   {Mauve}{user}{Text}@{Mauve}{host}{Reset}");
-            Console.WriteLine($"{Sapphire}    `888.   .8'    {Overlay}--------------------------{Reset}");
+            Console.WriteLine($"{C1}  oooooo     oooo");
+            Console.WriteLine($"{C1}   `888.     .8'   {C2}{Environment.UserName}{C3}@{C2}{Environment.MachineName}{R}");
+            Console.WriteLine($"{C1}    `888.   .8'    {C4}--------------------------{R}");
         }
 
-        static void Line(string key, string value)
+        static void Print(string key, string value)
         {
-            Console.WriteLine($"                   {Sapphire}{key,-7}{Text}➜  {value}");
+            Console.WriteLine($"                   {C1}{key,-7}{C3}➜  {value}");
         }
 
         static void Colors()
@@ -55,8 +54,7 @@ namespace VibeFetch
                 "\u001b[48;2;245;224;220m  " +
                 "\u001b[48;2;242;205;205m  " +
                 "\u001b[48;2;203;166;247m  " +
-                "\u001b[48;2;116;199;236m  " +
-                Reset);
+                "\u001b[48;2;116;199;236m  " + R);
         }
 
         // ---------------- SYSTEM ----------------
@@ -67,137 +65,138 @@ namespace VibeFetch
             {
                 if (File.Exists("/etc/os-release"))
                 {
-                    var line = File.ReadAllLines("/etc/os-release")
-                        .FirstOrDefault(l => l.StartsWith("PRETTY_NAME="));
-
-                    if (line != null)
-                        return line.Split('"')[1];
+                    var l = File.ReadAllLines("/etc/os-release")
+                        .FirstOrDefault(x => x.StartsWith("PRETTY_NAME="));
+                    if (l != null) return l.Split('"')[1];
                 }
+            } catch {}
 
-                return RuntimeInformation.OSDescription;
-            }
-            catch { return "Unknown"; }
+            return RuntimeInformation.OSDescription;
         }
 
         static string GetKernel()
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                return Run("uname", "-r");
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                return Environment.OSVersion.VersionString;
-
-            return "Unknown";
+            return TryRun("uname", "-r") ??
+                   RuntimeInformation.OSDescription;
         }
 
         static string GetUptime()
         {
+            var linux = TryRun("uptime", "-p");
+            if (!string.IsNullOrWhiteSpace(linux))
+                return linux.Replace("up ", "");
+
             try
             {
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                    return Run("uptime", "-p").Replace("up ", "");
-
                 var t = TimeSpan.FromMilliseconds(Environment.TickCount64);
                 return $"{(int)t.TotalHours}h {t.Minutes}m";
-            }
-            catch { return "Unknown"; }
+            } catch {}
+
+            return "unknown";
         }
 
-        static (long, long) GetRam()
+        static (long used, long total) GetRam()
         {
+            // Linux
             try
             {
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                if (File.Exists("/proc/meminfo"))
                 {
-                    string output = Run("wmic", "OS get FreePhysicalMemory,TotalVisibleMemorySize /Value");
+                    var l = File.ReadAllLines("/proc/meminfo");
+                    long t = Parse(l, "MemTotal");
+                    long a = Parse(l, "MemAvailable");
+                    return (t - a, t);
+                }
+            } catch {}
 
-                    long total = 0;
-                    long free = 0;
+            // Windows fallback
+            var outp = TryRun("wmic", "OS get FreePhysicalMemory,TotalVisibleMemorySize /Value");
+            if (!string.IsNullOrEmpty(outp))
+            {
+                long total = 0, free = 0;
 
-                    foreach (var line in output.Split('\n'))
-                    {
-                        if (line.StartsWith("TotalVisibleMemorySize="))
-                            total = long.Parse(line.Split('=')[1]) / 1024 / 1024;
-
-                        if (line.StartsWith("FreePhysicalMemory="))
-                            free = long.Parse(line.Split('=')[1]) / 1024 / 1024;
-                    }
-
-                    return (total - free, total);
+                foreach (var line in outp.Split('\n'))
+                {
+                    if (line.Contains("TotalVisibleMemorySize"))
+                        total = Extract(line) / 1024 / 1024;
+                    if (line.Contains("FreePhysicalMemory"))
+                        free = Extract(line) / 1024 / 1024;
                 }
 
-                var lines = File.ReadAllLines("/proc/meminfo");
-
-                long totalMem = Parse(lines, "MemTotal");
-                long freeMem = Parse(lines, "MemAvailable");
-
-                return (totalMem - freeMem, totalMem);
+                return (total - free, total);
             }
-            catch { return (0, 0); }
+
+            return (0, 0);
         }
 
-        static long Parse(string[] lines, string key)
-        {
-            var line = lines.FirstOrDefault(l => l.StartsWith(key));
-            if (line == null) return 0;
-
-            return long.Parse(line.Split(' ', StringSplitOptions.RemoveEmptyEntries)[1]) / 1024 / 1024;
-        }
-
-        static (long, long) GetDisk()
+        static (long used, long total) GetDisk()
         {
             try
             {
-                string root = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "C:\\" : "/";
+                var root = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "C:\\" : "/";
                 var d = new DriveInfo(root);
 
                 long total = d.TotalSize / 1073741824;
                 long used = (d.TotalSize - d.AvailableFreeSpace) / 1073741824;
 
                 return (used, total);
-            }
-            catch { return (0, 0); }
+            } catch { return (0, 0); }
         }
 
         // ---------------- UTILS ----------------
 
-        static string Run(string cmd, string args)
+        static string TryRun(string cmd, string args)
         {
             try
             {
-                var p = new Process
+                var p = Process.Start(new ProcessStartInfo
                 {
-                    StartInfo = new ProcessStartInfo
-                    {
-                        FileName = cmd,
-                        Arguments = args,
-                        RedirectStandardOutput = true,
-                        UseShellExecute = false,
-                        CreateNoWindow = true
-                    }
-                };
+                    FileName = cmd,
+                    Arguments = args,
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false
+                });
 
-                p.Start();
-                string output = p.StandardOutput.ReadToEnd();
-                p.WaitForExit();
+                if (p == null) return null;
 
-                return output.Trim();
+                string o = p.StandardOutput.ReadToEnd();
+                p.WaitForExit(2000);
+
+                return o.Trim();
             }
-            catch { return ""; }
+            catch { return null; }
         }
 
-        static void InitConsole()
+        static long Parse(string[] lines, string key)
+        {
+            var l = lines.FirstOrDefault(x => x.StartsWith(key));
+            if (l == null) return 0;
+
+            return long.Parse(l.Split(' ', StringSplitOptions.RemoveEmptyEntries)[1]) / 1024 / 1024;
+        }
+
+        static long Extract(string line)
+        {
+            var parts = line.Split('=');
+            return parts.Length > 1 ? long.Parse(parts[1].Trim()) : 0;
+        }
+
+        static void EnableAnsi()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 try
                 {
                     var h = GetStdHandle(-11);
-                    if (GetConsoleMode(h, out uint mode))
-                        SetConsoleMode(h, mode | 0x0004 | 0x0008);
-                }
-                catch { }
+                    GetConsoleMode(h, out uint m);
+                    SetConsoleMode(h, m | 0x0004);
+                } catch {}
             }
+        }
+
+        static void SafeClear()
+        {
+            try { Console.Clear(); } catch {}
         }
 
         [DllImport("kernel32.dll")] static extern IntPtr GetStdHandle(int n);
