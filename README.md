@@ -39,7 +39,7 @@
 
    Откройте новое окно терминала и просто введите vfetch.
 
-🐧 Linux (CachyOS / Arch / Ubuntu)
+🐧 Linux ( Other / Arch / Ubuntu)
 
 Соберите бинарник и добавьте его в системный путь:
 Bash
