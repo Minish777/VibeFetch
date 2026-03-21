@@ -2,6 +2,78 @@ name: Build and Release
 
 on:
   push:
+    branches: [ main ]
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write # Даем права на создание релиза
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Build
+      # Публикуем проект. На выходе будет один файл
+      run: dotnet publish *.csproj -c Release -r ${{ matrix.os == 'windows-latest' && 'win-x64' || 'linux-x64' }} --self-contained true /p:PublishSingleFile=true -o ./publish
+
+    - name: Prepare Artifacts
+      shell: bash
+      run: |
+        cd publish
+        if [ "${{ matrix.os }}" = "windows-latest" ]; then
+          # Находим любой .exe и называем его vfetch.exe
+          mv *.exe vfetch.exe
+        else
+          # Находим исполняемый файл (без расширения) и называем vfetch
+          mv $(find . -maxdepth 1 -type f ! -name "*.*") vfetch
+        fi
+
+    - name: Upload
+      uses: actions/upload-artifact@v4
+      with:
+        name: vfetch-${{ matrix.os }}
+        path: ./publish/vfetch*
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Download Windows
+      uses: actions/download-artifact@v4
+      with:
+        name: vfetch-windows-latest
+        path: ./assets/win
+    - name: Download Linux
+      uses: actions/download-artifact@v4
+      with:
+        name: vfetch-ubuntu-latest
+        path: ./assets/linux
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          ./assets/win/vfetch.exe
+          ./assets/linux/vfetch
+          install.py
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}name: Build and Release
+
+on:
+  push:
     branches: [ main ] # Сделаем запуск при каждом пуше в main, чтобы проверить работу
     tags:
       - 'v*'
